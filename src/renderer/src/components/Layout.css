@@ -1,0 +1,32 @@
+.layout-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #537291;
+}
+
+.layout-content {
+  flex: 1 0 auto;
+  padding: 24px;
+  background: #f8fafc;
+}
+
+.layout-footer {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 12px 0;
+  background: #fff;
+  color: #888;
+  font-size: 1rem;
+  border-top: 1px solid #e5e7eb;
+  letter-spacing: 0.02em;
+}
+
+.layout-footer a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+.layout-footer a:hover {
+  text-decoration: underline;
+} 
