@@ -5,6 +5,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   printReceipt: () => ipcRenderer.invoke('print-receipt'),
   listPrinters: () => ipcRenderer.invoke('list-printers'),
+  printReceiptContent: (html: string) => ipcRenderer.invoke('print-receipt-content', html),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

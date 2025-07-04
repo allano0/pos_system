@@ -46,10 +46,17 @@ function createWindow(): void {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
       return new Promise((resolve, reject) => {
-        win.webContents.print({ silent: true, printBackground: true }, (success, errorType) => {
-          if (!success) reject(errorType);
-          else resolve('printed');
-        });
+        win.webContents.print(
+          {
+            silent: true,
+            printBackground: true,
+            pageSize: 'A4', // Print on A4 paper
+          },
+          (success, errorType) => {
+            if (!success) reject(errorType);
+            else resolve('printed');
+          }
+        );
       });
     }
     return Promise.reject('No window found');
@@ -59,10 +66,53 @@ function createWindow(): void {
   ipcMain.handle('list-printers', async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
-      console.log('webContents keys:', Object.keys(win.webContents));
-      return (win.webContents as any).getPrinters();
+      console.log('webContents methods:', Object.keys(win.webContents));
+      // @ts-ignore
+      return win.webContents.getPrinters();
     }
     return [];
+  });
+
+  // IPC handler for printing only the receipt content in a new window
+  ipcMain.handle('print-receipt-content', async (_, html) => {
+    return new Promise((resolve, reject) => {
+      const printWindow = new BrowserWindow({
+        width: 800,
+        height: 1120, // A4 aspect ratio
+        show: false,
+        webPreferences: {
+          sandbox: false,
+        },
+      });
+      // Load the HTML as a data URL
+      printWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`
+        <html>
+          <head>
+            <style>
+              @media print {
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>${html}</body>
+        </html>
+      `));
+      printWindow.webContents.on('did-finish-load', () => {
+        setTimeout(() => {
+          printWindow.webContents.print({
+            silent: true,
+            printBackground: true,
+            pageSize: 'A4',
+          }, (success, errorType) => {
+            setTimeout(() => {
+              printWindow.close();
+            }, 3000); // Close after 3 seconds
+            if (!success) reject(errorType);
+            else resolve('printed');
+          });
+        }, 500); // Wait a bit for rendering
+      });
+    });
   });
 
   // HMR for renderer base on electron-vite cli.

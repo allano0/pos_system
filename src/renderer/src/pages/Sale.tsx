@@ -28,6 +28,7 @@ declare global {
     api?: {
       printReceipt: () => Promise<any>;
       listPrinters: () => Promise<any>;
+      printReceiptContent: (content: string) => Promise<any>;
     };
   }
 }
@@ -107,20 +108,14 @@ export default function Sale() {
   };
 
   const handlePrint = () => {
-    if (window.api && typeof window.api.printReceipt === 'function') {
-      window.api.printReceipt();
+    if (window.api && typeof window.api.printReceiptContent === 'function') {
+      if (receiptRef.current) {
+        window.api.printReceiptContent(receiptRef.current.innerHTML);
+      } else {
+        alert('Receipt content not found.');
+      }
     } else {
       alert('Direct print is not available.');
-    }
-  };
-
-  // Debug: Show available printers
-  const handleShowPrinters = async () => {
-    if (window.api && typeof window.api.listPrinters === 'function') {
-      const printers = await window.api.listPrinters();
-      alert('Available printers:\n' + printers.map((p: any) => `${p.name}${p.isDefault ? ' (Default)' : ''}`).join('\n'));
-    } else {
-      alert('Printer listing is not available.');
     }
   };
 
@@ -362,7 +357,6 @@ export default function Sale() {
               </div>
             </div>
             <button onClick={handlePrint} style={{ padding: '12px 0', borderRadius: 8, background: '#3182ce', color: '#fff', border: 'none', fontWeight: 600, fontSize: 17, width: '100%', marginTop: 16 }}>Print Receipt</button>
-            <button onClick={handleShowPrinters} style={{ padding: '10px 0', borderRadius: 8, background: '#888', color: '#fff', border: 'none', fontWeight: 600, fontSize: 15, width: '100%', marginTop: 8 }}>Show Available Printers</button>
           </div>
         </div>
       )}
