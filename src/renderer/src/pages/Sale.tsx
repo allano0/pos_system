@@ -95,12 +95,24 @@ export default function Sale() {
 
   const handlePayment = () => {
     // Generate receipt data
-    setReceiptData({
+    const saleRecord = {
       items: cart,
       total,
       paymentMethod,
-      date: new Date().toLocaleString(),
+      date: new Date().toISOString(),
       receiptNo: 'R' + Date.now(),
+      userName,
+    };
+    // Persist sale to localStorage
+    try {
+      const salesKey = 'pos_sales';
+      const prevSales = JSON.parse(localStorage.getItem(salesKey) || '[]');
+      prevSales.push(saleRecord);
+      localStorage.setItem(salesKey, JSON.stringify(prevSales));
+    } catch {}
+    setReceiptData({
+      ...saleRecord,
+      date: new Date().toLocaleString(), // for display
     });
     setShowReceipt(true);
     setModalOpen(false);
