@@ -60,11 +60,34 @@ export default function Products() {
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState('');
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [dbResults, setDbResults] = useState<Product[] | null>(null);
+  const [dbLoading, setDbLoading] = useState(false);
+  const [dbError, setDbError] = useState('');
+  const [dbPage, setDbPage] = useState(1);
 
   useEffect(() => {
     setProducts(loadProducts());
     setSuppliers(loadSuppliers());
   }, []);
+
+  useEffect(() => {
+    let filtered = products;
+    if (search.trim()) {
+      filtered = filtered.filter(p => p.name.toLowerCase().includes(search.trim().toLowerCase()));
+    }
+    if (categoryFilter) {
+      filtered = filtered.filter(p => p.category === categoryFilter);
+    }
+    if (supplierFilter) {
+      filtered = filtered.filter(p => p.supplier === supplierFilter);
+    }
+    setFilteredProducts(filtered);
+    setPage(1);
+  }, [search, categoryFilter, supplierFilter, products]);
 
   const openAddModal = () => {
     setForm({ ...emptyProduct });
@@ -131,9 +154,41 @@ export default function Products() {
   };
 
   // Pagination
-  const totalPages = Math.ceil(products.length / PAGE_SIZE) || 1;
-  const paginated = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE) || 1;
+  const paginated = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const goToPage = (p: number) => setPage(Math.max(1, Math.min(totalPages, p)));
+
+  // Database pagination
+  const dbTotalPages = dbResults ? Math.ceil(dbResults.length / PAGE_SIZE) || 1 : 1;
+  const dbPaginated = dbResults ? dbResults.slice((dbPage - 1) * PAGE_SIZE, dbPage * PAGE_SIZE) : [];
+  const goToDbPage = (p: number) => setDbPage(Math.max(1, Math.min(dbTotalPages, p)));
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Filtering is handled by useEffect
+  };
+
+  const handleDbSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDbLoading(true);
+    setDbError('');
+    setDbResults(null);
+    setDbPage(1);
+    try {
+      const res = await fetch('http://localhost:5000/api/products/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: search.trim(), category: categoryFilter, supplier: supplierFilter }),
+      });
+      if (!res.ok) throw new Error('Failed to search');
+      const data = await res.json();
+      setDbResults(data.products || []);
+    } catch (err) {
+      setDbError('Failed to search database.');
+    } finally {
+      setDbLoading(false);
+    }
+  };
 
   return (
     <div style={{ padding: 32, maxWidth: 900, margin: '0 auto', position: 'relative' }}>
@@ -146,6 +201,84 @@ export default function Products() {
           + Add Product
         </button>
       </div>
+      {/* Search and filter bar - moved to top */}
+      <form onSubmit={handleSearch} style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 18 }}>
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ padding: 10, fontSize: 16, borderRadius: 6, border: '1px solid #ccc', minWidth: 180 }}
+        />
+        <input
+          type="text"
+          placeholder="Category filter..."
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+          style={{ padding: 10, fontSize: 16, borderRadius: 6, border: '1px solid #ccc', minWidth: 140 }}
+        />
+        <select
+          value={supplierFilter}
+          onChange={e => setSupplierFilter(e.target.value)}
+          style={{ padding: 10, fontSize: 16, borderRadius: 6, border: '1px solid #ccc', minWidth: 140 }}
+        >
+          <option value="">All Suppliers</option>
+          {suppliers.map(s => (
+            <option key={s.id} value={s.name}>{s.name}</option>
+          ))}
+        </select>
+        <button type="submit" style={{ padding: '10px 20px', fontSize: 16, borderRadius: 8, background: '#22223b', color: '#fff', border: 'none', fontWeight: 600, boxShadow: '0 2px 8px #0002', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span role="img" aria-label="search">🔍</span> Search
+        </button>
+        <button type="button" onClick={handleDbSearch} style={{ padding: '10px 20px', fontSize: 16, borderRadius: 8, background: '#4f8cff', color: '#fff', border: 'none', fontWeight: 600, boxShadow: '0 2px 8px #0002', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span role="img" aria-label="cloud">☁️</span> Search from Database
+        </button>
+      </form>
+      {/* Database Results */}
+      {dbLoading && <div style={{ margin: '16px 0', color: '#3182ce', fontWeight: 500 }}>Searching database...</div>}
+      {dbError && <div style={{ margin: '16px 0', color: 'red', fontWeight: 500 }}>{dbError}</div>}
+      {dbResults && (
+        <div style={{ margin: '32px 0' }}>
+          <h3 style={{ marginBottom: 8 }}>Database Results</h3>
+          <div style={{ overflowX: 'auto', background: '#f8faff', borderRadius: 8, boxShadow: '0 2px 8px #0001', marginBottom: 16 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+              <thead style={{ background: '#e3eefe' }}>
+                <tr>
+                  <th style={{ padding: 10, textAlign: 'left' }}>Name</th>
+                  <th style={{ padding: 10, textAlign: 'left' }}>Category</th>
+                  <th style={{ padding: 10, textAlign: 'left' }}>Description</th>
+                  <th style={{ padding: 10, textAlign: 'right' }}>Price</th>
+                  <th style={{ padding: 10, textAlign: 'right' }}>Stock</th>
+                  <th style={{ padding: 10, textAlign: 'left' }}>Supplier</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dbPaginated.length === 0 ? (
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: 24, color: '#888' }}>No results found in database.</td></tr>
+                ) : dbPaginated.map(product => (
+                  <tr key={product.id || (product as any)._id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                    <td style={{ padding: 10 }}>{product.name}</td>
+                    <td style={{ padding: 10 }}>{product.category}</td>
+                    <td style={{ padding: 10, maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.description}</td>
+                    <td style={{ padding: 10, textAlign: 'right' }}>{product.price}</td>
+                    <td style={{ padding: 10, textAlign: 'right' }}>{product.stock}</td>
+                    <td style={{ padding: 10 }}>{product.supplier}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* DB Pagination */}
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <button onClick={() => goToDbPage(dbPage - 1)} disabled={dbPage === 1} style={{ padding: '4px 12px', borderRadius: 4, border: '1px solid #ccc', background: dbPage === 1 ? '#f5f7fa' : '#fff', cursor: dbPage === 1 ? 'not-allowed' : 'pointer' }}>{'<'}</button>
+            {Array.from({ length: dbTotalPages }, (_, i) => (
+              <button key={i+1} onClick={() => goToDbPage(i+1)} style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid #ccc', background: dbPage === i+1 ? '#3182ce' : '#fff', color: dbPage === i+1 ? '#fff' : '#222', fontWeight: dbPage === i+1 ? 700 : 400, cursor: 'pointer' }}>{i+1}</button>
+            ))}
+            <button onClick={() => goToDbPage(dbPage + 1)} disabled={dbPage === dbTotalPages} style={{ padding: '4px 12px', borderRadius: 4, border: '1px solid #ccc', background: dbPage === dbTotalPages ? '#f5f7fa' : '#fff', cursor: dbPage === dbTotalPages ? 'not-allowed' : 'pointer' }}>{'>'}</button>
+          </div>
+        </div>
+      )}
+      {/* Main Table */}
       <div style={{ overflowX: 'auto', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001', marginBottom: 16 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
           <thead style={{ background: '#f5f7fa' }}>

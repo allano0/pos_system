@@ -47,10 +47,36 @@ export default function Cashiers() {
   const [form, setForm] = useState({ ...emptyCashier });
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  // Search/filter state
+  const [search, setSearch] = useState('');
+  const [branchFilter, setBranchFilter] = useState('');
+  const [filteredCashiers, setFilteredCashiers] = useState<Cashier[]>(cashiers);
+  const PAGE_SIZE = 5;
+  const [page, setPage] = useState(1);
+  const [dbResults, setDbResults] = useState<Cashier[] | null>(null);
+  const [dbLoading, setDbLoading] = useState(false);
+  const [dbError, setDbError] = useState('');
 
   useEffect(() => {
     setBranches(getBranches());
   }, []);
+
+  useEffect(() => {
+    let filtered = cashiers;
+    if (search.trim()) {
+      filtered = filtered.filter(c => c.name.toLowerCase().includes(search.trim().toLowerCase()));
+    }
+    if (branchFilter) {
+      filtered = filtered.filter(c => c.branchId === branchFilter);
+    }
+    setFilteredCashiers(filtered);
+    setPage(1); // Reset to first page on filter/search change
+  }, [search, branchFilter, cashiers]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCashiers.length / PAGE_SIZE) || 1;
+  const paginated = filteredCashiers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const goToPage = (p: number) => setPage(Math.max(1, Math.min(totalPages, p)));
 
   const openAddModal = () => {
     setForm({ ...emptyCashier });
@@ -111,8 +137,34 @@ export default function Cashiers() {
     saveCashiers(updated);
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Filtering is handled by useEffect
+  };
+
+  const handleDbSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDbLoading(true);
+    setDbError('');
+    setDbResults(null);
+    try {
+      const res = await fetch('http://localhost:5000/api/cashiers/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: search.trim(), branchId: branchFilter }),
+      });
+      if (!res.ok) throw new Error('Failed to search');
+      const data = await res.json();
+      setDbResults(data.cashiers || []);
+    } catch (err) {
+      setDbError('Failed to search database.');
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
   return (
-    <div style={{ padding: 32, maxWidth: 700, margin: '0 auto', position: 'relative' }}>
+    <div style={{ padding: 32, maxWidth: 900, margin: '0 auto', position: 'relative' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h2>Cashiers</h2>
         <button
@@ -122,6 +174,65 @@ export default function Cashiers() {
           + Add Cashier
         </button>
       </div>
+      {/* Search and filter bar */}
+      <form onSubmit={handleSearch} style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 18 }}>
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ padding: 10, fontSize: 16, borderRadius: 6, border: '1px solid #ccc', minWidth: 180 }}
+        />
+        <select
+          value={branchFilter}
+          onChange={e => setBranchFilter(e.target.value)}
+          style={{ padding: 10, fontSize: 16, borderRadius: 6, border: '1px solid #ccc', minWidth: 160 }}
+        >
+          <option value="">All Branches</option>
+          {branches.map(branch => (
+            <option key={branch.id} value={branch.id}>{branch.name} ({branch.location})</option>
+          ))}
+        </select>
+        <button type="submit" style={{ padding: '10px 20px', fontSize: 16, borderRadius: 8, background: '#22223b', color: '#fff', border: 'none', fontWeight: 600, boxShadow: '0 2px 8px #0002', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span role="img" aria-label="search">🔍</span> Search
+        </button>
+        <button type="button" onClick={handleDbSearch} style={{ padding: '10px 20px', fontSize: 16, borderRadius: 8, background: '#4f8cff', color: '#fff', border: 'none', fontWeight: 600, boxShadow: '0 2px 8px #0002', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span role="img" aria-label="cloud">☁️</span> Search from Database
+        </button>
+      </form>
+      {/* Database Results */}
+      {dbLoading && <div style={{ margin: '16px 0', color: '#3182ce', fontWeight: 500 }}>Searching database...</div>}
+      {dbError && <div style={{ margin: '16px 0', color: 'red', fontWeight: 500 }}>{dbError}</div>}
+      {dbResults && (
+        <div style={{ margin: '32px 0' }}>
+          <h3 style={{ marginBottom: 8 }}>Database Results</h3>
+          <div style={{ overflowX: 'auto', background: '#f8faff', borderRadius: 8, boxShadow: '0 2px 8px #0001', marginBottom: 16 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
+              <thead style={{ background: '#e3eefe' }}>
+                <tr>
+                  <th style={{ padding: 10, textAlign: 'left' }}>Name</th>
+                  <th style={{ padding: 10, textAlign: 'left' }}>PIN</th>
+                  <th style={{ padding: 10, textAlign: 'left' }}>Branch</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dbResults.length === 0 ? (
+                  <tr><td colSpan={3} style={{ textAlign: 'center', padding: 24, color: '#888' }}>No results found in database.</td></tr>
+                ) : dbResults.map(cashier => {
+                  const branch = branches.find(b => b.id === cashier.branchId);
+                  return (
+                    <tr key={cashier.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                      <td style={{ padding: 10 }}>{cashier.name}</td>
+                      <td style={{ padding: 10 }}>{cashier.pin}</td>
+                      <td style={{ padding: 10 }}>{branch ? `${branch.name} (${branch.location})` : cashier.branchId}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
       <div style={{ overflowX: 'auto', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001', marginBottom: 16 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
           <thead style={{ background: '#f5f5f5' }}>
@@ -133,9 +244,9 @@ export default function Cashiers() {
             </tr>
           </thead>
           <tbody>
-            {cashiers.length === 0 ? (
+            {paginated.length === 0 ? (
               <tr><td colSpan={4} style={{ textAlign: 'center', padding: 24, color: '#888' }}>No cashiers found.</td></tr>
-            ) : cashiers.map(cashier => {
+            ) : paginated.map(cashier => {
               const branch = branches.find(b => b.id === cashier.branchId);
               return (
                 <tr key={cashier.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
@@ -151,6 +262,14 @@ export default function Cashiers() {
             })}
           </tbody>
         </table>
+      </div>
+      {/* Pagination */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <button onClick={() => goToPage(page - 1)} disabled={page === 1} style={{ padding: '4px 12px', borderRadius: 4, border: '1px solid #ccc', background: page === 1 ? '#f5f7fa' : '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer' }}>{'<'}</button>
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button key={i+1} onClick={() => goToPage(i+1)} style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid #ccc', background: page === i+1 ? '#3182ce' : '#fff', color: page === i+1 ? '#fff' : '#222', fontWeight: page === i+1 ? 700 : 400, cursor: 'pointer' }}>{i+1}</button>
+        ))}
+        <button onClick={() => goToPage(page + 1)} disabled={page === totalPages} style={{ padding: '4px 12px', borderRadius: 4, border: '1px solid #ccc', background: page === totalPages ? '#f5f7fa' : '#fff', cursor: page === totalPages ? 'not-allowed' : 'pointer' }}>{'>'}</button>
       </div>
       {/* Modal */}
       {modalOpen && (

@@ -6,6 +6,7 @@ import './SignIn.css';
 const keypadNumbers = [1,2,3,4,5,6,7,8,9,0];
 const CASHIER_STORAGE_KEY = 'pos_cashiers';
 const BRANCH_STORAGE_KEY = 'pos_branches';
+const OWNER_STORAGE_KEY = 'pos_owner';
 
 function getCashiers() {
   try {
@@ -21,6 +22,13 @@ function getBranches() {
     return [];
   }
 }
+function getOwner() {
+  try {
+    return JSON.parse(localStorage.getItem(OWNER_STORAGE_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
 
 export default function SignIn() {
   const [role, setRole] = useState<'cashier' | 'owner'>('cashier');
@@ -30,6 +38,7 @@ export default function SignIn() {
   const navigate = useNavigate();
   const cashiers = getCashiers();
   const branches = getBranches();
+  const owner = getOwner();
 
   const handleKeypad = (num: number) => {
     if (pin.length < 6) setPin(pin + num);
@@ -54,9 +63,9 @@ export default function SignIn() {
         setError('Incorrect PIN or branch. Please try again.');
         setPin('');
       }
-    } else if (role === 'owner' && pin === '2921') {
+    } else if (role === 'owner' && owner && pin === owner.pin) {
       sessionStorage.setItem('role', 'default');
-      sessionStorage.setItem('userName', 'Owner');
+      sessionStorage.setItem('userName', owner.name);
       navigate('/owner-dashboard');
     } else {
       setError('Incorrect PIN. Please try again.');

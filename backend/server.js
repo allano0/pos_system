@@ -132,6 +132,107 @@ app.get('/api/owner', async (req, res) => {
   }
 });
 
+// POST /api/cashiers/search endpoint
+app.post('/api/cashiers/search', async (req, res) => {
+  try {
+    const { name, branchId } = req.body;
+    const query = {};
+    if (name) {
+      query.name = { $regex: name, $options: 'i' };
+    }
+    if (branchId) {
+      query.branchId = branchId;
+    }
+    const results = await Cashier.find(query);
+    res.json({ cashiers: results });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to search cashiers' });
+  }
+});
+
+// POST /api/suppliers/search endpoint
+app.post('/api/suppliers/search', async (req, res) => {
+  try {
+    const { name, category } = req.body;
+    const query = {};
+    if (name) {
+      query.name = { $regex: name, $options: 'i' };
+    }
+    if (category) {
+      query.category = category;
+    }
+    const results = await Supplier.find(query);
+    res.json({ suppliers: results });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to search suppliers' });
+  }
+});
+
+// POST /api/branches/search endpoint
+app.post('/api/branches/search', async (req, res) => {
+  try {
+    const { name, location } = req.body;
+    const query = {};
+    if (name) {
+      query.name = { $regex: name, $options: 'i' };
+    }
+    if (location) {
+      query.location = { $regex: location, $options: 'i' };
+    }
+    const results = await Branch.find(query);
+    res.json({ branches: results });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to search branches' });
+  }
+});
+
+// POST /api/products/search endpoint
+app.post('/api/products/search', async (req, res) => {
+  try {
+    const { name, category, supplier } = req.body;
+    const query = {};
+    if (name) {
+      query.name = { $regex: name, $options: 'i' };
+    }
+    if (category) {
+      query.category = category;
+    }
+    if (supplier) {
+      query.supplier = supplier;
+    }
+    const results = await Product.find(query);
+    res.json({ products: results });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to search products' });
+  }
+});
+
+// --- Add after other model definitions ---
+const customerSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  name: String,
+  phone: String,
+  email: String,
+  address: String,
+});
+const Customer = mongoose.model('Customer', customerSchema);
+
+// --- Add after other search endpoints ---
+// POST /api/customers/search endpoint
+app.post('/api/customers/search', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const query = {};
+    if (name) {
+      query.name = { $regex: name, $options: 'i' };
+    }
+    const results = await Customer.find(query);
+    res.json({ customers: results });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to search customers' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 }); 
