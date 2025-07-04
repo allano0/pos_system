@@ -4,8 +4,13 @@ const PRODUCT_STORAGE_KEY = 'pos_products';
 const BRANCH_STORAGE_KEY = 'pos_branches';
 const CASHIER_STORAGE_KEY = 'pos_cashiers';
 const OWNER_STORAGE_KEY = 'pos_owner';
+const SUPPLIER_STORAGE_KEY = 'pos_suppliers';
 const SYNC_URL = 'http://localhost:5000/api/sync'; // Unified endpoint assumed
 const OWNER_URL = 'http://localhost:5000/api/owner';
+const DELETED_PRODUCT_KEY = 'pos_deleted_products';
+const DELETED_BRANCH_KEY = 'pos_deleted_branches';
+const DELETED_CASHIER_KEY = 'pos_deleted_cashiers';
+const DELETED_SUPPLIER_KEY = 'pos_deleted_suppliers';
 
 export default function DataSync() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -13,22 +18,72 @@ export default function DataSync() {
   const [unsyncedProducts, setUnsyncedProducts] = useState(() => JSON.parse(localStorage.getItem(PRODUCT_STORAGE_KEY) || '[]'));
   const [unsyncedBranches, setUnsyncedBranches] = useState(() => JSON.parse(localStorage.getItem(BRANCH_STORAGE_KEY) || '[]'));
   const [unsyncedCashiers, setUnsyncedCashiers] = useState(() => JSON.parse(localStorage.getItem(CASHIER_STORAGE_KEY) || '[]'));
+  const [unsyncedSuppliers, setUnsyncedSuppliers] = useState(() => JSON.parse(localStorage.getItem(SUPPLIER_STORAGE_KEY) || '[]'));
+
+  function loadDeletedProductIds() {
+    try {
+      return JSON.parse(localStorage.getItem(DELETED_PRODUCT_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  }
+  function loadDeletedBranchIds() {
+    try {
+      return JSON.parse(localStorage.getItem(DELETED_BRANCH_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  }
+  function loadDeletedCashierIds() {
+    try {
+      return JSON.parse(localStorage.getItem(DELETED_CASHIER_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  }
+  function loadDeletedSupplierIds() {
+    try {
+      return JSON.parse(localStorage.getItem(DELETED_SUPPLIER_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  }
+  function clearDeletedIds() {
+    localStorage.removeItem(DELETED_PRODUCT_KEY);
+    localStorage.removeItem(DELETED_BRANCH_KEY);
+    localStorage.removeItem(DELETED_CASHIER_KEY);
+    localStorage.removeItem(DELETED_SUPPLIER_KEY);
+  }
 
   const handleSync = async () => {
     setStatus('loading');
     setMessage('');
     try {
+      const deletedProductIds = loadDeletedProductIds();
+      const deletedBranchIds = loadDeletedBranchIds();
+      const deletedCashierIds = loadDeletedCashierIds();
+      const deletedSupplierIds = loadDeletedSupplierIds();
       const res = await fetch(SYNC_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products: unsyncedProducts, branches: unsyncedBranches, cashiers: unsyncedCashiers }),
+        body: JSON.stringify({
+          products: unsyncedProducts,
+          branches: unsyncedBranches,
+          cashiers: unsyncedCashiers,
+          suppliers: unsyncedSuppliers,
+          deletedProductIds,
+          deletedBranchIds,
+          deletedCashierIds,
+          deletedSupplierIds,
+        }),
       });
       if (!res.ok) throw new Error('Sync failed');
       const data = await res.json();
-      if (Array.isArray(data.products) && Array.isArray(data.branches) && Array.isArray(data.cashiers)) {
+      if (Array.isArray(data.products) && Array.isArray(data.branches) && Array.isArray(data.cashiers) && Array.isArray(data.suppliers)) {
         localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(data.products));
         localStorage.setItem(BRANCH_STORAGE_KEY, JSON.stringify(data.branches));
         localStorage.setItem(CASHIER_STORAGE_KEY, JSON.stringify(data.cashiers));
+        localStorage.setItem(SUPPLIER_STORAGE_KEY, JSON.stringify(data.suppliers));
         // Fetch and persist owner
         try {
           const ownerRes = await fetch(OWNER_URL);
@@ -42,6 +97,8 @@ export default function DataSync() {
         setUnsyncedProducts([]);
         setUnsyncedBranches([]);
         setUnsyncedCashiers([]);
+        setUnsyncedSuppliers([]);
+        clearDeletedIds();
       } else {
         throw new Error('Invalid response');
       }

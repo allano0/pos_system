@@ -19,6 +19,7 @@ interface Supplier {
 const STORAGE_KEY = 'pos_products';
 const SUPPLIER_KEY = 'pos_suppliers';
 const PAGE_SIZE = 5;
+const DELETED_STORAGE_KEY = 'pos_deleted_products';
 
 function loadProducts(): Product[] {
   try {
@@ -40,6 +41,19 @@ function loadSuppliers(): Supplier[] {
   } catch {
     return [];
   }
+}
+
+function loadDeletedProductIds(): string[] {
+  try {
+    const data = localStorage.getItem(DELETED_STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDeletedProductIds(ids: string[]) {
+  localStorage.setItem(DELETED_STORAGE_KEY, JSON.stringify(ids));
 }
 
 const emptyProduct: Omit<Product, 'id' | 'lastModified'> = {
@@ -151,6 +165,12 @@ export default function Products() {
     const updated = products.filter(p => p.id !== id);
     setProducts(updated);
     saveProducts(updated);
+    // Track deleted ID
+    const deletedIds = loadDeletedProductIds();
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id);
+      saveDeletedProductIds(deletedIds);
+    }
   };
 
   // Pagination

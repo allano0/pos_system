@@ -62,9 +62,40 @@ async function ensureOwner() {
 }
 ensureOwner();
 
+// Add Supplier schema/model if missing
+const supplierSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  name: String,
+  location: String,
+  phone: String,
+  email: String,
+  category: String,
+});
+const Supplier = mongoose.model('Supplier', supplierSchema);
+
 // Unified sync endpoint for products, branches, and cashiers
 app.post('/api/sync', async (req, res) => {
   try {
+    // --- Products deletions ---
+    const deletedProductIds = req.body.deletedProductIds || [];
+    if (Array.isArray(deletedProductIds) && deletedProductIds.length > 0) {
+      await Product.deleteMany({ id: { $in: deletedProductIds } });
+    }
+    // --- Branches deletions ---
+    const deletedBranchIds = req.body.deletedBranchIds || [];
+    if (Array.isArray(deletedBranchIds) && deletedBranchIds.length > 0) {
+      await Branch.deleteMany({ id: { $in: deletedBranchIds } });
+    }
+    // --- Cashiers deletions ---
+    const deletedCashierIds = req.body.deletedCashierIds || [];
+    if (Array.isArray(deletedCashierIds) && deletedCashierIds.length > 0) {
+      await Cashier.deleteMany({ id: { $in: deletedCashierIds } });
+    }
+    // --- Suppliers deletions ---
+    const deletedSupplierIds = req.body.deletedSupplierIds || [];
+    if (Array.isArray(deletedSupplierIds) && deletedSupplierIds.length > 0) {
+      await Supplier.deleteMany({ id: { $in: deletedSupplierIds } });
+    }
     // --- Products sync ---
     const localProducts = req.body.products || [];
     for (const local of localProducts) {
@@ -111,7 +142,25 @@ app.post('/api/sync', async (req, res) => {
     }
     const allCashiers = await Cashier.find({});
 
-    res.json({ products: allProducts, branches: allBranches, cashiers: allCashiers });
+    // --- Suppliers sync ---
+    const localSuppliers = req.body.suppliers || [];
+    for (const local of localSuppliers) {
+      const dbSupplier = await Supplier.findOne({ id: local.id });
+      if (!dbSupplier) {
+        await Supplier.create(local);
+      } else {
+        // No lastModified for suppliers, so just update all fields
+        dbSupplier.name = local.name;
+        dbSupplier.location = local.location;
+        dbSupplier.phone = local.phone;
+        dbSupplier.email = local.email;
+        dbSupplier.category = local.category;
+        await dbSupplier.save();
+      }
+    }
+    const allSuppliers = await Supplier.find({});
+
+    res.json({ products: allProducts, branches: allBranches, cashiers: allCashiers, suppliers: allSuppliers });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Sync failed' });

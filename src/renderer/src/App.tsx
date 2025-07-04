@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Versions from './components/Versions'
 import electronLogo from './assets/electron.svg'
 import SignIn from './pages/SignIn'
-import CashierDashboard from './pages/CashierDashboard'
 import OwnerDashboard from './pages/OwnerDashboard'
 import Layout from './components/Layout'
 import Sale from './pages/Sale'
@@ -29,7 +28,6 @@ function App(): React.JSX.Element {
       <Routes>
         <Route path="/" element={<SignIn />} />
         <Route path="/signin" element={<SignIn />} />
-        <Route path="/cashier-dashboard" element={<Layout role={role}><CashierDashboard /></Layout>} />
         <Route path="/owner-dashboard" element={<Layout role={role}><OwnerDashboard /></Layout>} />
         <Route path="/sale" element={<Layout role={role}><Sale /></Layout>} />
         <Route path="/customers" element={<Layout role={role}><Customers /></Layout>} />

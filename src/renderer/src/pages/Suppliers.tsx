@@ -11,6 +11,7 @@ interface Supplier {
 
 const STORAGE_KEY = 'pos_suppliers';
 const PAGE_SIZE = 5;
+const DELETED_SUPPLIER_KEY = 'pos_deleted_suppliers';
 
 function loadSuppliers(): Supplier[] {
   try {
@@ -23,6 +24,19 @@ function loadSuppliers(): Supplier[] {
 
 function saveSuppliers(suppliers: Supplier[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(suppliers));
+}
+
+function loadDeletedSupplierIds(): string[] {
+  try {
+    const data = localStorage.getItem(DELETED_SUPPLIER_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDeletedSupplierIds(ids: string[]) {
+  localStorage.setItem(DELETED_SUPPLIER_KEY, JSON.stringify(ids));
 }
 
 const emptySupplier: Omit<Supplier, 'id'> = {
@@ -125,6 +139,12 @@ export default function Suppliers() {
     const updated = suppliers.filter(s => s.id !== id);
     setSuppliers(updated);
     saveSuppliers(updated);
+    // Track deleted ID
+    const deletedIds = loadDeletedSupplierIds();
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id);
+      saveDeletedSupplierIds(deletedIds);
+    }
   };
 
   // Pagination

@@ -57,8 +57,8 @@ export default function SignIn() {
       if (cashier) {
         sessionStorage.setItem('role', 'cashier');
         sessionStorage.setItem('userName', cashier.name);
-        // Persist session info if needed
-        navigate('/cashier-dashboard');
+        // Redirect to sale instead of cashier-dashboard
+        navigate('/sale');
       } else {
         setError('Incorrect PIN or branch. Please try again.');
         setPin('');

@@ -41,6 +41,30 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  // IPC handler for direct printing
+  ipcMain.handle('print-receipt', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      return new Promise((resolve, reject) => {
+        win.webContents.print({ silent: true, printBackground: true }, (success, errorType) => {
+          if (!success) reject(errorType);
+          else resolve('printed');
+        });
+      });
+    }
+    return Promise.reject('No window found');
+  });
+
+  // IPC handler to list available printers
+  ipcMain.handle('list-printers', async (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      console.log('webContents keys:', Object.keys(win.webContents));
+      return (win.webContents as any).getPrinters();
+    }
+    return [];
+  });
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

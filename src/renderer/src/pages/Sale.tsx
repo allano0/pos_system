@@ -22,6 +22,16 @@ interface CartItem extends Product {
   quantity: number;
 }
 
+// Add type for window.api
+declare global {
+  interface Window {
+    api?: {
+      printReceipt: () => Promise<any>;
+      listPrinters: () => Promise<any>;
+    };
+  }
+}
+
 export default function Sale() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -33,6 +43,9 @@ export default function Sale() {
   const PAGE_SIZE = 8;
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+
+  // Get cashier/owner name from sessionStorage
+  const userName = sessionStorage.getItem('userName') || 'User';
 
   // Filtered and paginated products
   const filteredProducts = products.filter(p =>
@@ -94,22 +107,20 @@ export default function Sale() {
   };
 
   const handlePrint = () => {
-    if (receiptRef.current) {
-      const printContents = receiptRef.current.innerHTML;
-      const win = window.open('', '', 'width=600,height=800');
-      if (win) {
-        win.document.write('<html><head><title>Receipt</title>');
-        win.document.write('<style>body{font-family:sans-serif;padding:24px;} table{width:100%;border-collapse:collapse;} th,td{padding:8px;border-bottom:1px solid #eee;} th{text-align:left;} .total{font-weight:bold;font-size:18px;} .center{text-align:center;}</style>');
-        win.document.write('</head><body>');
-        win.document.write(printContents);
-        win.document.write('</body></html>');
-        win.document.close();
-        win.focus();
-        setTimeout(() => {
-          win.print();
-          win.close();
-        }, 500);
-      }
+    if (window.api && typeof window.api.printReceipt === 'function') {
+      window.api.printReceipt();
+    } else {
+      alert('Direct print is not available.');
+    }
+  };
+
+  // Debug: Show available printers
+  const handleShowPrinters = async () => {
+    if (window.api && typeof window.api.listPrinters === 'function') {
+      const printers = await window.api.listPrinters();
+      alert('Available printers:\n' + printers.map((p: any) => `${p.name}${p.isDefault ? ' (Default)' : ''}`).join('\n'));
+    } else {
+      alert('Printer listing is not available.');
     }
   };
 
@@ -183,7 +194,7 @@ export default function Sale() {
                 }}
               >
                 <div style={{ fontWeight: 700, fontSize: 18, color: '#223', marginBottom: 2 }}>{product.name}</div>
-                <div style={{ color: '#3182ce', fontWeight: 600, fontSize: 16 }}>${product.price.toFixed(2)}</div>
+                <div style={{ color: '#3182ce', fontWeight: 600, fontSize: 16 }}>Ksh {product.price.toFixed(2)}</div>
                 <div style={{ color: '#888', fontSize: 14 }}>Stock: {product.stock}</div>
                 <button
                   onClick={() => addToCart(product)}
@@ -257,7 +268,7 @@ export default function Sale() {
                         style={{ width: 44, padding: 4, borderRadius: 4, border: '1px solid #ccc' }}
                       />
                     </td>
-                    <td style={{ padding: 8 }}>${(item.price * item.quantity).toFixed(2)}</td>
+                    <td style={{ padding: 8 }}>Ksh {(item.price * item.quantity).toFixed(2)}</td>
                     <td style={{ padding: 8 }}>
                       <button onClick={() => removeFromCart(item.id)} style={{ padding: '4px 8px', borderRadius: 6, background: '#e53e3e', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>✕</button>
                     </td>
@@ -267,7 +278,7 @@ export default function Sale() {
             </table>
           </div>
           <div style={{ textAlign: 'right', fontWeight: 600, fontSize: 18, marginBottom: 16 }}>
-            Total: ${total.toFixed(2)}
+            Total: Ksh {total.toFixed(2)}
           </div>
           <button
             onClick={handleCheckout}
@@ -334,20 +345,24 @@ export default function Sale() {
                     <tr key={item.id}>
                       <td>{item.name}</td>
                       <td style={{ textAlign: 'right' }}>{item.quantity}</td>
-                      <td style={{ textAlign: 'right' }}>${item.price.toFixed(2)}</td>
-                      <td style={{ textAlign: 'right' }}>${(item.price * item.quantity).toFixed(2)}</td>
+                      <td style={{ textAlign: 'right' }}>Ksh {item.price.toFixed(2)}</td>
+                      <td style={{ textAlign: 'right' }}>Ksh {(item.price * item.quantity).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               <div className="total" style={{ textAlign: 'right', fontWeight: 700, fontSize: 18, marginBottom: 8 }}>
-                Total: ${receiptData.total.toFixed(2)}
+                Total: Ksh {receiptData.total.toFixed(2)}
               </div>
               <div style={{ textAlign: 'right', marginBottom: 8 }}>
                 Payment Method: <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{receiptData.paymentMethod}</span>
               </div>
+              <div style={{ textAlign: 'center', marginTop: 16, color: '#444', fontSize: 15 }}>
+                You were served by <span style={{ fontWeight: 600 }}>{userName}</span>
+              </div>
             </div>
             <button onClick={handlePrint} style={{ padding: '12px 0', borderRadius: 8, background: '#3182ce', color: '#fff', border: 'none', fontWeight: 600, fontSize: 17, width: '100%', marginTop: 16 }}>Print Receipt</button>
+            <button onClick={handleShowPrinters} style={{ padding: '10px 0', borderRadius: 8, background: '#888', color: '#fff', border: 'none', fontWeight: 600, fontSize: 15, width: '100%', marginTop: 8 }}>Show Available Printers</button>
           </div>
         </div>
       )}

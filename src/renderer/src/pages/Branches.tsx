@@ -8,6 +8,7 @@ interface Branch {
 
 const STORAGE_KEY = 'pos_branches';
 const PAGE_SIZE = 5;
+const DELETED_BRANCH_KEY = 'pos_deleted_branches';
 
 function getInitialBranches(): Branch[] {
   try {
@@ -15,6 +16,19 @@ function getInitialBranches(): Branch[] {
   } catch {
     return [];
   }
+}
+
+function loadDeletedBranchIds(): string[] {
+  try {
+    const data = localStorage.getItem(DELETED_BRANCH_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDeletedBranchIds(ids: string[]) {
+  localStorage.setItem(DELETED_BRANCH_KEY, JSON.stringify(ids));
 }
 
 export default function Branches() {
@@ -116,6 +130,12 @@ export default function Branches() {
   const handleDelete = (id: string) => {
     const updated = branches.filter(b => b.id !== id);
     saveBranches(updated);
+    // Track deleted ID
+    const deletedIds = loadDeletedBranchIds();
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id);
+      saveDeletedBranchIds(deletedIds);
+    }
     if (editingId === id) {
       setEditingId(null);
       setName('');

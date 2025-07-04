@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Cashier {
   id: string;
@@ -16,6 +17,7 @@ interface Branch {
 
 const CASHIER_STORAGE_KEY = 'pos_cashiers';
 const BRANCH_STORAGE_KEY = 'pos_branches';
+const DELETED_CASHIER_KEY = 'pos_deleted_cashiers';
 
 function getInitialCashiers(): Cashier[] {
   try {
@@ -31,6 +33,19 @@ function getBranches(): Branch[] {
   } catch {
     return [];
   }
+}
+
+function loadDeletedCashierIds(): string[] {
+  try {
+    const data = localStorage.getItem(DELETED_CASHIER_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDeletedCashierIds(ids: string[]) {
+  localStorage.setItem(DELETED_CASHIER_KEY, JSON.stringify(ids));
 }
 
 const emptyCashier: Omit<Cashier, 'id' | 'lastModified'> = {
@@ -56,6 +71,14 @@ export default function Cashiers() {
   const [dbResults, setDbResults] = useState<Cashier[] | null>(null);
   const [dbLoading, setDbLoading] = useState(false);
   const [dbError, setDbError] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const role = sessionStorage.getItem('role');
+    if (role === 'cashier') {
+      navigate('/cashier-dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     setBranches(getBranches());
@@ -135,6 +158,12 @@ export default function Cashiers() {
   const handleDelete = (id: string) => {
     const updated = cashiers.filter(c => c.id !== id);
     saveCashiers(updated);
+    // Track deleted ID
+    const deletedIds = loadDeletedCashierIds();
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id);
+      saveDeletedCashierIds(deletedIds);
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
