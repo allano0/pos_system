@@ -4,12 +4,32 @@ import electronLogo from '../assets/electron.svg';
 import './SignIn.css';
 
 const keypadNumbers = [1,2,3,4,5,6,7,8,9,0];
+const CASHIER_STORAGE_KEY = 'pos_cashiers';
+const BRANCH_STORAGE_KEY = 'pos_branches';
+
+function getCashiers() {
+  try {
+    return JSON.parse(localStorage.getItem(CASHIER_STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+function getBranches() {
+  try {
+    return JSON.parse(localStorage.getItem(BRANCH_STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
 
 export default function SignIn() {
   const [role, setRole] = useState<'cashier' | 'owner'>('cashier');
   const [pin, setPin] = useState('');
+  const [branchId, setBranchId] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const cashiers = getCashiers();
+  const branches = getBranches();
 
   const handleKeypad = (num: number) => {
     if (pin.length < 6) setPin(pin + num);
@@ -19,9 +39,24 @@ export default function SignIn() {
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    if (role === 'cashier' && pin === '1234') {
-      navigate('/cashier-dashboard');
+    if (role === 'cashier') {
+      if (!branchId) {
+        setError('Please select a branch.');
+        return;
+      }
+      const cashier = cashiers.find(c => c.pin === pin && c.branchId === branchId);
+      if (cashier) {
+        sessionStorage.setItem('role', 'cashier');
+        sessionStorage.setItem('userName', cashier.name);
+        // Persist session info if needed
+        navigate('/cashier-dashboard');
+      } else {
+        setError('Incorrect PIN or branch. Please try again.');
+        setPin('');
+      }
     } else if (role === 'owner' && pin === '2921') {
+      sessionStorage.setItem('role', 'default');
+      sessionStorage.setItem('userName', 'Owner');
       navigate('/owner-dashboard');
     } else {
       setError('Incorrect PIN. Please try again.');
@@ -48,12 +83,28 @@ export default function SignIn() {
                   name="role"
                   value={r}
                   checked={role === r}
-                  onChange={() => setRole(r as 'cashier' | 'owner')}
+                  onChange={() => { setRole(r as 'cashier' | 'owner'); setError(''); setPin(''); setBranchId(''); }}
                 />
                 <span className="signin-role-text">{r}</span>
               </label>
             ))}
           </div>
+          {/* Branch Selection for Cashier */}
+          {role === 'cashier' && (
+            <div style={{ marginBottom: 16 }}>
+              <select
+                value={branchId}
+                onChange={e => setBranchId(e.target.value)}
+                className="signin-branch-select"
+                style={{ width: '100%', padding: 10, fontSize: 16, borderRadius: 6, border: '1px solid #ccc' }}
+              >
+                <option value="">Select Branch</option>
+                {branches.map((b: any) => (
+                  <option key={b.id} value={b.id}>{b.name} ({b.location})</option>
+                ))}
+              </select>
+            </div>
+          )}
           {/* PIN Input */}
           <div className="signin-pin-input-wrapper">
             <input

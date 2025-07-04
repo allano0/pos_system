@@ -12,26 +12,35 @@ import Products from './pages/Products'
 import Suppliers from './pages/Suppliers'
 import CreditNote from './pages/CreditNote'
 import DataSync from './pages/DataSync'
+import Branches from './pages/Branches'
+
+function getRole(): 'default' | 'cashier' {
+  const val = sessionStorage.getItem('role');
+  if (val === 'cashier') return 'cashier';
+  return 'default';
+}
 
 function App(): React.JSX.Element {
   const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+  const role = getRole();
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<SignIn />} />
         <Route path="/signin" element={<SignIn />} />
-        <Route path="/cashier-dashboard" element={<Layout><CashierDashboard /></Layout>} />
-        <Route path="/owner-dashboard" element={<Layout><OwnerDashboard /></Layout>} />
-        <Route path="/sale" element={<Layout><Sale /></Layout>} />
-        <Route path="/customers" element={<Layout><Customers /></Layout>} />
-        <Route path="/cashiers" element={<Layout><Cashiers /></Layout>} />
-        <Route path="/products" element={<Layout><Products /></Layout>} />
-        <Route path="/suppliers" element={<Layout><Suppliers /></Layout>} />
-        <Route path="/credit-note" element={<Layout><CreditNote /></Layout>} />
-        <Route path="/data-sync" element={<Layout><DataSync /></Layout>} />
+        <Route path="/cashier-dashboard" element={<Layout role={role}><CashierDashboard /></Layout>} />
+        <Route path="/owner-dashboard" element={<Layout role={role}><OwnerDashboard /></Layout>} />
+        <Route path="/sale" element={<Layout role={role}><Sale /></Layout>} />
+        <Route path="/customers" element={<Layout role={role}><Customers /></Layout>} />
+        <Route path="/cashiers" element={<Layout role={role}><Cashiers /></Layout>} />
+        <Route path="/products" element={<Layout role={role}><Products /></Layout>} />
+        <Route path="/suppliers" element={<Layout role={role}><Suppliers /></Layout>} />
+        <Route path="/credit-note" element={<Layout role={role}><CreditNote /></Layout>} />
+        <Route path="/data-sync" element={<Layout role={role}><DataSync /></Layout>} />
+        <Route path="/branches" element={<Layout role={role}><Branches /></Layout>} />
         <Route path="*" element={
-          <Layout>
+          <Layout role={role}>
             <img alt="logo" className="logo" src={electronLogo} />
             <div className="creator">Powered by electron-vite</div>
             <div className="text">

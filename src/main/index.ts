@@ -2,6 +2,21 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { spawn } from 'child_process'
+
+let backendProcess: ReturnType<typeof spawn> | null = null
+
+function startBackend() {
+  backendProcess = spawn('node', ['backend/server.js'], {
+    cwd: process.cwd(),
+    stdio: 'inherit',
+    shell: process.platform === 'win32', // For Windows compatibility
+  })
+
+  backendProcess.on('close', (code) => {
+    console.log(`Backend process exited with code ${code}`)
+  })
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -51,6 +66,8 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+
+  startBackend()
 
   createWindow()
 
