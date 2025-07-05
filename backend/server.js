@@ -243,6 +243,26 @@ app.get('/api/branches', async (req, res) => {
   }
 });
 
+// GET /api/products endpoint
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await Product.find({});
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+// GET /api/suppliers endpoint
+app.get('/api/suppliers', async (req, res) => {
+  try {
+    const suppliers = await Supplier.find({});
+    res.json(suppliers);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch suppliers' });
+  }
+});
+
 // POST /api/cashiers/search endpoint
 app.post('/api/cashiers/search', async (req, res) => {
   try {

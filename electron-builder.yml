@@ -58,7 +58,10 @@ publish:
   provider: github
   owner: allano0
   repo: pos_system
-  token: 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
+  # Note: Token should be set via environment variable GITHUB_TOKEN for security
+  # token: ${env.GITHUB_TOKEN}
   releaseType: release
+  # Ensure releases are publicly accessible
+  private: false
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

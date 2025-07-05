@@ -82,10 +82,23 @@ export default function Products() {
   const [dbLoading, setDbLoading] = useState(false);
   const [dbError, setDbError] = useState('');
   const [dbPage, setDbPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     setProducts(loadProducts());
     setSuppliers(loadSuppliers());
+  }, []);
+
+  // Refresh data when localStorage changes (e.g., after sync)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setProducts(loadProducts());
+      setSuppliers(loadSuppliers());
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   useEffect(() => {
@@ -173,6 +186,46 @@ export default function Products() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Determine backend URL based on environment
+      const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+      const baseUrl = isDev ? 'http://localhost:5000' : 'https://supermax-backend.onrender.com';
+      
+      // Fetch fresh data from server
+      const [productsRes, suppliersRes] = await Promise.all([
+        fetch(`${baseUrl}/api/products`),
+        fetch(`${baseUrl}/api/suppliers`)
+      ]);
+      
+      if (productsRes.ok && suppliersRes.ok) {
+        const products = await productsRes.json();
+        const suppliers = await suppliersRes.json();
+        
+        // Update localStorage and state
+        localStorage.setItem('pos_products', JSON.stringify(products));
+        localStorage.setItem('pos_suppliers', JSON.stringify(suppliers));
+        setProducts(products);
+        setSuppliers(suppliers);
+        
+        // Show success feedback
+        console.log('Data refreshed successfully!');
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000); // Hide after 3 seconds
+      } else {
+        throw new Error('Failed to fetch fresh data');
+      }
+    } catch (error) {
+      console.error('Refresh failed:', error);
+      // Fallback to localStorage refresh
+      setProducts(loadProducts());
+      setSuppliers(loadSuppliers());
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE) || 1;
   const paginated = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -212,15 +265,108 @@ export default function Products() {
 
   return (
     <div style={{ padding: 32, maxWidth: 900, margin: '0 auto', position: 'relative' }}>
+      <style>
+        {`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+          }
+          @keyframes slideIn {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+        `}
+      </style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h2>Products</h2>
-        <button
-          onClick={openAddModal}
-          style={{ padding: '10px 24px', fontSize: 16, borderRadius: 8, background: '#3182ce', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}
-        >
-          + Add Product
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            style={{
+              padding: '12px 24px',
+              fontSize: 16,
+              borderRadius: 12,
+              background: isRefreshing ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: '#fff',
+              border: 'none',
+              cursor: isRefreshing ? 'not-allowed' : 'pointer',
+              fontWeight: 600,
+              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseEnter={(e) => {
+              if (!isRefreshing) {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isRefreshing) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+              }
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+                fontSize: '18px'
+              }}
+            >
+              {isRefreshing ? '⚡' : '🔄'}
+            </span>
+            {isRefreshing ? 'Syncing...' : 'Sync Data'}
+          </button>
+          <button
+            onClick={openAddModal}
+            style={{ padding: '10px 24px', fontSize: 16, borderRadius: 8, background: '#3182ce', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+          >
+            + Add Product
+          </button>
+        </div>
       </div>
+      
+      {/* Success Notification */}
+      {showSuccess && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)',
+          zIndex: 1000,
+          animation: 'slideIn 0.3s ease-out',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '16px',
+          fontWeight: '600'
+        }}>
+          <span style={{ fontSize: '20px' }}>✅</span>
+          Data synced successfully!
+        </div>
+      )}
+      
       {/* Search and filter bar - moved to top */}
       <form onSubmit={handleSearch} style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 18 }}>
         <input

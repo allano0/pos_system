@@ -1,17 +1,17 @@
-Write-Host "Setting GitHub Personal Access Token..." -ForegroundColor Green
-Write-Host ""
+# PowerShell script to set GitHub token for electron-builder
+# Run this script before building the application
 
-$token = Read-Host "Please enter your GitHub Personal Access Token" -AsSecureString
-$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($token)
-$plainToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$Token
+)
 
-$env:GH_TOKEN = $plainToken
+# Set the environment variable for the current session
+$env:GITHUB_TOKEN = $Token
 
-Write-Host ""
-Write-Host "Token set successfully!" -ForegroundColor Green
+# Also set it for the user profile (persistent)
+[Environment]::SetEnvironmentVariable("GITHUB_TOKEN", $Token, "User")
+
+Write-Host "GitHub token set successfully!" -ForegroundColor Green
 Write-Host "You can now run: npm run dist:win" -ForegroundColor Yellow
-Write-Host ""
-Write-Host "Note: This token will only be available in the current PowerShell session." -ForegroundColor Cyan
-Write-Host "To make it permanent, add it to your system environment variables." -ForegroundColor Cyan
-Write-Host ""
-Read-Host "Press Enter to continue" 
+Write-Host "Note: The token will be used for publishing updates to GitHub releases." -ForegroundColor Cyan 

@@ -12,6 +12,14 @@ let backendProcess: ReturnType<typeof spawn> | null = null
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
 
+// Add additional configuration for better error handling
+autoUpdater.logger = console
+
+// Set request headers to avoid some common issues
+autoUpdater.requestHeaders = {
+  'User-Agent': 'Supermax-POS-Updater'
+}
+
 // Update events
 autoUpdater.on('checking-for-update', () => {
   console.log('Checking for updates...')
@@ -38,12 +46,27 @@ autoUpdater.on('update-not-available', () => {
 
 autoUpdater.on('error', (err) => {
   console.log('Error in auto-updater:', err)
-  // Only show error dialog for specific errors, not for network issues
-  if (err.message.includes('404') || err.message.includes('ENOTFOUND')) {
-    console.log('Update server not available, skipping update check')
+  
+  // Filter out common network and server errors that shouldn't show to users
+  const errorMessage = err.message || 'Unknown error'
+  
+  if (errorMessage.includes('404') || 
+      errorMessage.includes('ENOTFOUND') || 
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('ETIMEDOUT') ||
+      errorMessage.includes('null byte') ||
+      errorMessage.includes('Unexpected token') ||
+      errorMessage.includes('Invalid JSON')) {
+    console.log('Update server not available or response malformed, skipping update check:', errorMessage)
     return
   }
-  dialog.showErrorBox('Update Error', 'Error checking for updates: ' + err.message)
+  
+  // Only show critical errors to users
+  if (errorMessage.includes('EACCES') || errorMessage.includes('EPERM')) {
+    dialog.showErrorBox('Update Error', 'Permission denied when checking for updates. Please run the application as administrator.')
+  } else if (!errorMessage.includes('network') && !errorMessage.includes('timeout')) {
+    dialog.showErrorBox('Update Error', 'Error checking for updates: ' + errorMessage)
+  }
 })
 
 autoUpdater.on('download-progress', (progressObj) => {
@@ -244,7 +267,20 @@ app.whenReady().then(() => {
       return { success: true, result }
     } catch (error) {
       console.error('Error checking for updates:', error)
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      
+      // Filter out common errors that shouldn't be shown to users
+      if (errorMessage.includes('404') || 
+          errorMessage.includes('ENOTFOUND') || 
+          errorMessage.includes('ECONNREFUSED') ||
+          errorMessage.includes('ETIMEDOUT') ||
+          errorMessage.includes('null byte') ||
+          errorMessage.includes('Unexpected token') ||
+          errorMessage.includes('Invalid JSON')) {
+        return { success: false, error: 'Update server not available' }
+      }
+      
+      return { success: false, error: errorMessage }
     }
   })
 
@@ -272,7 +308,7 @@ app.whenReady().then(() => {
   createWindow()
 
   // Check for updates on app start (only in production)
-  if (!is.dev) {
+  if (!is.dev && process.env.DISABLE_AUTO_UPDATE !== 'true') {
     setTimeout(() => {
       autoUpdater.checkForUpdates()
     }, 3000) // Check after 3 seconds

@@ -9,6 +9,7 @@ interface UpdateStatus {
   downloaded: boolean
   error: string | null
   version?: string
+  currentVersion?: string
   isOnline: boolean
   lastChecked?: string
 }
@@ -22,6 +23,19 @@ const UpdateChecker: React.FC = () => {
     error: null,
     isOnline: navigator.onLine
   })
+
+  // Get current app version on component mount
+  useEffect(() => {
+    const getCurrentVersion = async () => {
+      try {
+        const currentVersion = await window.api.getAppVersion()
+        setStatus(prev => ({ ...prev, currentVersion }))
+      } catch (error) {
+        console.error('Failed to get current version:', error)
+      }
+    }
+    getCurrentVersion()
+  }, [])
 
   // Check internet connectivity
   useEffect(() => {
@@ -49,14 +63,27 @@ const UpdateChecker: React.FC = () => {
       const result = await window.api.checkForUpdates()
       
       if (result.success) {
-        if (result.result) {
-          setStatus(prev => ({
-            ...prev,
-            checking: false,
-            available: true,
-            version: result.result.updateInfo?.version,
-            lastChecked: new Date().toLocaleString()
-          }))
+        if (result.result && result.result.updateInfo) {
+          const newVersion = result.result.updateInfo.version
+          const currentVersion = status.currentVersion
+          
+          // Only show update if the new version is actually newer
+          if (newVersion && currentVersion && newVersion !== currentVersion) {
+            setStatus(prev => ({
+              ...prev,
+              checking: false,
+              available: true,
+              version: newVersion,
+              lastChecked: new Date().toLocaleString()
+            }))
+          } else {
+            setStatus(prev => ({
+              ...prev,
+              checking: false,
+              available: false,
+              lastChecked: new Date().toLocaleString()
+            }))
+          }
         } else {
           setStatus(prev => ({
             ...prev,
@@ -205,7 +232,9 @@ const UpdateChecker: React.FC = () => {
               <FaCheckCircle />
             </div>
             <h4 className="update-checker-up-to-date-title">You're up to date!</h4>
-            <p className="update-checker-up-to-date-text">Your system is running the latest version with all security patches.</p>
+            <p className="update-checker-up-to-date-text">
+              Your system is running version {status.currentVersion} with all security patches.
+            </p>
           </div>
         )}
 

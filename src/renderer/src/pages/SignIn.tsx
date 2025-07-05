@@ -113,6 +113,24 @@ export default function SignIn() {
       const branches = await branchesResponse.json();
       console.log('Branches fetched:', branches.length, 'records');
       
+      // Fetch products
+      console.log('Fetching products...');
+      const productsResponse = await fetch(`${baseUrl}/api/products`);
+      if (!productsResponse.ok) {
+        throw new Error(`Failed to fetch products: ${productsResponse.status}`);
+      }
+      const products = await productsResponse.json();
+      console.log('Products fetched:', products.length, 'records');
+      
+      // Fetch suppliers
+      console.log('Fetching suppliers...');
+      const suppliersResponse = await fetch(`${baseUrl}/api/suppliers`);
+      if (!suppliersResponse.ok) {
+        throw new Error(`Failed to fetch suppliers: ${suppliersResponse.status}`);
+      }
+      const suppliers = await suppliersResponse.json();
+      console.log('Suppliers fetched:', suppliers.length, 'records');
+      
       // Fetch owner/admin data
       console.log('Fetching owner data...');
       const ownerResponse = await fetch(`${baseUrl}/api/owner`);
@@ -126,6 +144,8 @@ export default function SignIn() {
       localStorage.setItem(CASHIER_STORAGE_KEY, JSON.stringify(cashiers));
       localStorage.setItem(BRANCH_STORAGE_KEY, JSON.stringify(branches));
       localStorage.setItem(OWNER_STORAGE_KEY, JSON.stringify(owner));
+      localStorage.setItem('pos_products', JSON.stringify(products));
+      localStorage.setItem('pos_suppliers', JSON.stringify(suppliers));
       
       console.log('Data successfully stored in localStorage');
       setShowSyncModal(false);
@@ -276,6 +296,8 @@ export default function SignIn() {
               <ul>
                 <li>• Cashier accounts and PINs</li>
                 <li>• Branch information</li>
+                <li>• Product catalog</li>
+                <li>• Supplier information</li>
                 <li>• Owner/admin credentials</li>
               </ul>
               <div className="sync-warning">

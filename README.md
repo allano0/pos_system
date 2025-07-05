@@ -79,3 +79,7 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
+
+## Auto-Update Configuration
+
+For information on configuring auto-updates and troubleshooting update issues, see [UPDATE_INSTRUCTIONS.md](./UPDATE_INSTRUCTIONS.md).

@@ -6,8 +6,11 @@ const CASHIER_STORAGE_KEY = 'pos_cashiers';
 const OWNER_STORAGE_KEY = 'pos_owner';
 const SUPPLIER_STORAGE_KEY = 'pos_suppliers';
 const SALES_STORAGE_KEY = 'pos_sales';
-const SYNC_URL = 'http://localhost:5000/api/sync'; // Unified endpoint assumed
-const OWNER_URL = 'http://localhost:5000/api/owner';
+// Determine backend URL based on environment
+const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+const baseUrl = isDev ? 'http://localhost:5000' : 'https://supermax-backend.onrender.com';
+const SYNC_URL = `${baseUrl}/api/sync`;
+const OWNER_URL = `${baseUrl}/api/owner`;
 const DELETED_PRODUCT_KEY = 'pos_deleted_products';
 const DELETED_BRANCH_KEY = 'pos_deleted_branches';
 const DELETED_CASHIER_KEY = 'pos_deleted_cashiers';
@@ -97,7 +100,7 @@ export default function DataSync() {
           }
         } catch {}
         setStatus('success');
-        setMessage('Sync successful! Local products, branches, cashiers, and owner updated.');
+        setMessage('Sync successful! All data has been synchronized with the cloud database.');
         setUnsyncedProducts([]);
         setUnsyncedBranches([]);
         setUnsyncedCashiers([]);
@@ -127,7 +130,7 @@ export default function DataSync() {
         <div style={{ color: status === 'success' ? 'green' : 'red', marginTop: 12, fontWeight: 500 }}>{message}</div>
       )}
       <div style={{ color: '#888', marginTop: 24, fontSize: 14 }}>
-        This will push local products, branches, and cashiers to the cloud and pull the latest from the cloud (MongoDB).
+        This will synchronize all local data (products, branches, cashiers, suppliers, sales) with the cloud database and pull the latest updates.
       </div>
       <div style={{ marginTop: 32 }}>
         <h3 style={{ marginBottom: 8 }}>Unsynced Products</h3>

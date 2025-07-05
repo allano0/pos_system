@@ -162,4 +162,122 @@ autoUpdater.checkForUpdates()
 3. Implement rollback functionality
 4. Add update progress indicators
 
-For more information, see the [electron-updater documentation](https://www.electron.build/auto-update). 
+For more information, see the [electron-updater documentation](https://www.electron.build/auto-update).
+
+# Update Configuration Instructions
+
+## Overview
+This document explains how to configure and troubleshoot the auto-update system for the Supermax POS application.
+
+## GitHub Token Setup
+
+### 1. Create a GitHub Personal Access Token
+1. Go to GitHub Settings > Developer settings > Personal access tokens
+2. Click "Generate new token (classic)"
+3. Give it a name like "Supermax POS Updates"
+4. Select the following scopes:
+   - `repo` (Full control of private repositories)
+   - `write:packages` (Upload packages to GitHub Package Registry)
+5. Copy the generated token
+
+### 2. Set the Token
+You can set the token in several ways:
+
+#### Option A: Using the provided scripts
+```bash
+# PowerShell
+.\set-github-token.ps1 -Token "your_token_here"
+
+# Batch file
+set-github-token.bat
+```
+
+#### Option B: Environment variable
+```bash
+# Windows
+set GITHUB_TOKEN=your_token_here
+
+# Linux/Mac
+export GITHUB_TOKEN=your_token_here
+```
+
+#### Option C: System environment variable
+1. Open System Properties > Environment Variables
+2. Add a new user variable:
+   - Variable name: `GITHUB_TOKEN`
+   - Variable value: `your_token_here`
+
+## Building and Publishing Updates
+
+### 1. Build the application
+```bash
+npm run build
+```
+
+### 2. Publish to GitHub releases
+```bash
+npm run dist:win
+```
+
+This will:
+- Build the application
+- Create a Windows installer
+- Upload it to GitHub releases
+- Create an update manifest for auto-updates
+
+## Troubleshooting Update Issues
+
+### Common Error: "null byte is not allowed in input"
+This error typically occurs when:
+1. The GitHub token is invalid or expired
+2. The update server response is malformed
+3. Network connectivity issues
+
+#### Solutions:
+1. **Regenerate your GitHub token** if it's expired
+2. **Check your internet connection**
+3. **Verify the repository settings** in electron-builder.yml
+4. **Disable auto-updates temporarily** by setting `DISABLE_AUTO_UPDATE=true`
+
+### Disable Auto-Updates Temporarily
+If you need to disable auto-updates while troubleshooting:
+
+```bash
+# Set environment variable
+set DISABLE_AUTO_UPDATE=true
+
+# Or modify the code in src/main/index.ts
+# Change the condition to: if (false) {
+```
+
+### Manual Update Check
+Users can manually check for updates through the application's update checker interface.
+
+## Update Server Configuration
+
+The application is configured to use GitHub releases as the update server. The configuration is in `electron-builder.yml`:
+
+```yaml
+publish:
+  provider: github
+  owner: allano0
+  repo: pos_system
+  releaseType: release
+```
+
+## Security Notes
+
+1. **Never commit tokens to version control**
+2. **Use environment variables for sensitive data**
+3. **Rotate tokens regularly**
+4. **Use minimal required permissions for tokens**
+
+## Version Management
+
+When releasing updates:
+1. Update the version in `package.json`
+2. Create a new GitHub release
+3. Tag the release with the version number
+4. Upload the built installer to the release
+
+The auto-updater will automatically detect new versions and prompt users to update. 
