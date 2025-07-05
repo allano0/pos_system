@@ -121,11 +121,7 @@ export default function Branches() {
     closeModal();
   };
 
-  const handleEdit = (branch: Branch) => {
-    setEditingId(branch.id);
-    setName(branch.name);
-    setLocation(branch.location);
-  };
+
 
   const handleDelete = (id: string) => {
     const updated = branches.filter(b => b.id !== id);

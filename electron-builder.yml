@@ -1,6 +1,7 @@
-appId: com.electron.app
-productName: pos-system
+appId: com.pos.system
+productName: POS System
 directories:
+  output: dist
   buildResources: build
 files:
   - '!**/.vscode/*'
@@ -9,10 +10,15 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - 'out/**/*'
+  - 'backend/node_modules/**/*'
 asarUnpack:
   - resources/**
+  - out/backend/**
 win:
   executableName: pos-system
+  sign: false
+  signAndEditExecutable: false
   target:
     - target: nsis
       arch:
@@ -46,11 +52,9 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
+forceCodeSigning: false
 publish:
-  provider: github
-  owner: YOUR_GITHUB_USERNAME
-  repo: pos_system
-  private: false
-  releaseType: release
+  provider: generic
+  url: https://example.com/auto-updates
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { spawn } from 'child_process'
 import { autoUpdater } from 'electron-updater'
+import { existsSync } from 'fs'
 
 let backendProcess: ReturnType<typeof spawn> | null = null
 
@@ -37,6 +38,11 @@ autoUpdater.on('update-not-available', () => {
 
 autoUpdater.on('error', (err) => {
   console.log('Error in auto-updater:', err)
+  // Only show error dialog for specific errors, not for network issues
+  if (err.message.includes('404') || err.message.includes('ENOTFOUND')) {
+    console.log('Update server not available, skipping update check')
+    return
+  }
   dialog.showErrorBox('Update Error', 'Error checking for updates: ' + err.message)
 })
 
@@ -60,15 +66,52 @@ autoUpdater.on('update-downloaded', (info) => {
 })
 
 function startBackend() {
-  backendProcess = spawn('node', ['backend/server.js'], {
-    cwd: process.cwd(),
-    stdio: 'inherit',
-    shell: process.platform === 'win32', // For Windows compatibility
-  })
+  try {
+    // Determine the correct path for the backend
+    const backendPath = is.dev 
+      ? join(process.cwd(), 'backend', 'server.js')
+      : join(__dirname, '..', 'backend', 'server.js')
+    
+    console.log('Starting backend at:', backendPath)
+    
+    // Check if the backend file exists
+    if (!existsSync(backendPath)) {
+      console.error('Backend file not found at:', backendPath)
+      return
+    }
+    
+    // Use proper path handling for Windows with spaces
+    const nodeCommand = process.platform === 'win32' ? 'node.exe' : 'node'
+    
+    // For Windows, use shell to handle paths with spaces properly
+    if (process.platform === 'win32') {
+      // On Windows, use shell to handle paths with spaces
+      backendProcess = spawn(`"${nodeCommand}" "${backendPath}"`, [], {
+        stdio: 'inherit' as const,
+        shell: true,
+        cwd: is.dev ? process.cwd() : join(__dirname, '..') // Set working directory
+      })
+    } else {
+      // On other platforms, use direct spawn
+      backendProcess = spawn(nodeCommand, [backendPath], {
+        stdio: 'inherit' as const,
+        shell: false,
+        cwd: is.dev ? process.cwd() : join(__dirname, '..') // Set working directory
+      })
+    }
 
-  backendProcess.on('close', (code) => {
-    console.log(`Backend process exited with code ${code}`)
-  })
+    if (backendProcess) {
+      backendProcess.on('close', (code) => {
+        console.log(`Backend process exited with code ${code}`)
+      })
+
+      backendProcess.on('error', (error) => {
+        console.error('Backend process error:', error)
+      })
+    }
+  } catch (error) {
+    console.error('Error starting backend:', error)
+  }
 }
 
 function createWindow(): void {
