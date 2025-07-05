@@ -61,23 +61,38 @@ export default function SignIn() {
     setSyncError('');
     
     try {
-      // Fetch real data from your backend API
-      const baseUrl = 'http://localhost:5000';
+      // Determine backend URL based on environment
+      const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+      const baseUrl = isDev ? 'http://localhost:5000' : 'http://localhost:5000'; // Same for now since backend is bundled
+      console.log('Environment:', isDev ? 'Development' : 'Production');
       console.log('Attempting to connect to backend at:', baseUrl);
       
-      // Test backend connectivity first
-      try {
-        console.log('Testing backend connectivity...');
-        const testResponse = await fetch(`${baseUrl}/api/test`);
-        console.log('Backend test response status:', testResponse.status);
-        if (!testResponse.ok) {
-          throw new Error(`Backend responded with status: ${testResponse.status}`);
+      // Test backend connectivity first with retry mechanism
+      let backendReady = false;
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      while (!backendReady && attempts < maxAttempts) {
+        try {
+          console.log(`Testing backend connectivity (attempt ${attempts + 1}/${maxAttempts})...`);
+          const testResponse = await fetch(`${baseUrl}/api/test`);
+          console.log('Backend test response status:', testResponse.status);
+          if (!testResponse.ok) {
+            throw new Error(`Backend responded with status: ${testResponse.status}`);
+          }
+          const testData = await testResponse.json();
+          console.log('Backend test response:', testData);
+          backendReady = true;
+        } catch (testError) {
+          console.error(`Backend connectivity test failed (attempt ${attempts + 1}):`, testError);
+          attempts++;
+          if (attempts < maxAttempts) {
+            console.log(`Waiting 2 seconds before retry...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } else {
+            throw new Error(`Cannot connect to backend server after ${maxAttempts} attempts. Please ensure the server is running on ${baseUrl}`);
+          }
         }
-        const testData = await testResponse.json();
-        console.log('Backend test response:', testData);
-      } catch (testError) {
-        console.error('Backend connectivity test failed:', testError);
-        throw new Error(`Cannot connect to backend server. Please ensure the server is running on ${baseUrl}`);
       }
       
       // Fetch cashiers
@@ -119,7 +134,7 @@ export default function SignIn() {
     } catch (error) {
       console.error('Sync error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setSyncError(`Failed to sync data: ${errorMessage}. Please ensure the backend server is running on http://localhost:5000`);
+      setSyncError(`Failed to sync data: ${errorMessage}. Please try restarting the application.`);
     } finally {
       setIsSyncing(false);
     }
@@ -264,7 +279,7 @@ export default function SignIn() {
                 <li>• Owner/admin credentials</li>
               </ul>
               <div className="sync-warning">
-                <strong>⚠️ Important:</strong> The backend server must be running on http://localhost:5000 to sync data.
+                <strong>⚠️ Important:</strong> The backend server will start automatically. If sync fails, please restart the application.
               </div>
               {syncError && (
                 <div className="sync-error">

@@ -11,7 +11,8 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
   - 'out/**/*'
-  - 'backend/node_modules/**/*'
+  - 'backend/**/*'
+  - '!backend/node_modules/**/*'
 asarUnpack:
   - resources/**
   - out/backend/**
