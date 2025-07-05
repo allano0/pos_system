@@ -9,6 +9,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Test endpoint to verify server is running
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Supermax POS Backend is running!', timestamp: new Date().toISOString() });
+});
+
 const PORT =  5000;
 const MONGODB_URI = 'mongodb+srv://allano2921:allano@cluster0.83ourjh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
@@ -209,12 +214,32 @@ app.get('/api/owner', async (req, res) => {
   try {
     const owner = await Owner.findOne({ role: 'owner' });
     if (owner) {
-      res.json({ owner });
+      res.json(owner);
     } else {
       res.status(404).json({ error: 'Owner not found' });
     }
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch owner' });
+  }
+});
+
+// GET /api/cashiers endpoint
+app.get('/api/cashiers', async (req, res) => {
+  try {
+    const cashiers = await Cashier.find({});
+    res.json(cashiers);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch cashiers' });
+  }
+});
+
+// GET /api/branches endpoint
+app.get('/api/branches', async (req, res) => {
+  try {
+    const branches = await Branch.find({});
+    res.json(branches);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch branches' });
   }
 });
 

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route } from 'react-router-dom'
 import Versions from './components/Versions'
 import electronLogo from './assets/electron.svg'
 import SignIn from './pages/SignIn'
@@ -31,7 +31,7 @@ function App(): React.JSX.Element {
   const role = getRole();
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<SignIn />} />
         <Route path="/signin" element={<SignIn />} />
@@ -74,7 +74,7 @@ function App(): React.JSX.Element {
           </Layout>
         } />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 

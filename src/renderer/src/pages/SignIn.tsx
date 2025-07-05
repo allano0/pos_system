@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import electronLogo from '../assets/electron.svg';
 import './SignIn.css';
 
 const keypadNumbers = [1,2,3,4,5,6,7,8,9,0];
-const CASHIER_STORAGE_KEY = 'pos_cashiers';
-const BRANCH_STORAGE_KEY = 'pos_branches';
-const OWNER_STORAGE_KEY = 'pos_owner';
+const CASHIER_STORAGE_KEY = 'supermax_cashiers';
+const BRANCH_STORAGE_KEY = 'supermax_branches';
+const OWNER_STORAGE_KEY = 'supermax_owner';
 
 function getCashiers() {
   try {
@@ -35,16 +34,96 @@ export default function SignIn() {
   const [pin, setPin] = useState('');
   const [branchId, setBranchId] = useState('');
   const [error, setError] = useState('');
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState('');
   const navigate = useNavigate();
   const cashiers = getCashiers();
   const branches = getBranches();
   const owner = getOwner();
+
+  // Check if this is a fresh installation (no data in localStorage)
+  useEffect(() => {
+    const hasData = cashiers.length > 0 || branches.length > 0 || owner !== null;
+    if (!hasData) {
+      setShowSyncModal(true);
+    }
+  }, [cashiers.length, branches.length, owner]);
 
   const handleKeypad = (num: number) => {
     if (pin.length < 6) setPin(pin + num);
   };
   const handleBackspace = () => setPin(pin.slice(0, -1));
   const handleClear = () => setPin('');
+
+  const handleSyncData = async () => {
+    setIsSyncing(true);
+    setSyncError('');
+    
+    try {
+      // Fetch real data from your backend API
+      const baseUrl = 'http://localhost:5000';
+      console.log('Attempting to connect to backend at:', baseUrl);
+      
+      // Test backend connectivity first
+      try {
+        console.log('Testing backend connectivity...');
+        const testResponse = await fetch(`${baseUrl}/api/test`);
+        console.log('Backend test response status:', testResponse.status);
+        if (!testResponse.ok) {
+          throw new Error(`Backend responded with status: ${testResponse.status}`);
+        }
+        const testData = await testResponse.json();
+        console.log('Backend test response:', testData);
+      } catch (testError) {
+        console.error('Backend connectivity test failed:', testError);
+        throw new Error(`Cannot connect to backend server. Please ensure the server is running on ${baseUrl}`);
+      }
+      
+      // Fetch cashiers
+      console.log('Fetching cashiers...');
+      const cashiersResponse = await fetch(`${baseUrl}/api/cashiers`);
+      if (!cashiersResponse.ok) {
+        throw new Error(`Failed to fetch cashiers: ${cashiersResponse.status}`);
+      }
+      const cashiers = await cashiersResponse.json();
+      console.log('Cashiers fetched:', cashiers.length, 'records');
+      
+      // Fetch branches
+      console.log('Fetching branches...');
+      const branchesResponse = await fetch(`${baseUrl}/api/branches`);
+      if (!branchesResponse.ok) {
+        throw new Error(`Failed to fetch branches: ${branchesResponse.status}`);
+      }
+      const branches = await branchesResponse.json();
+      console.log('Branches fetched:', branches.length, 'records');
+      
+      // Fetch owner/admin data
+      console.log('Fetching owner data...');
+      const ownerResponse = await fetch(`${baseUrl}/api/owner`);
+      if (!ownerResponse.ok) {
+        throw new Error(`Failed to fetch owner data: ${ownerResponse.status}`);
+      }
+      const owner = await ownerResponse.json();
+      console.log('Owner data fetched:', owner);
+      
+      // Store the real data in localStorage
+      localStorage.setItem(CASHIER_STORAGE_KEY, JSON.stringify(cashiers));
+      localStorage.setItem(BRANCH_STORAGE_KEY, JSON.stringify(branches));
+      localStorage.setItem(OWNER_STORAGE_KEY, JSON.stringify(owner));
+      
+      console.log('Data successfully stored in localStorage');
+      setShowSyncModal(false);
+      window.location.reload(); // Reload to refresh the data
+      
+    } catch (error) {
+      console.error('Sync error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setSyncError(`Failed to sync data: ${errorMessage}. Please ensure the backend server is running on http://localhost:5000`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,13 +155,13 @@ export default function SignIn() {
   return (
     <div className="signin-root">
       <div className="signin-card">
-        {/* Left: Logo/Image */}
+        {/* Left: Hero Image */}
         <div className="signin-image-section">
-          <img src={electronLogo} alt="Logo" className="signin-logo" draggable="false" />
+          <img src="/src/assets/hero.png" alt="POS System Hero" className="signin-hero" draggable="false" />
         </div>
         {/* Right: Sign In Form */}
         <div className="signin-form-section">
-          <h1 className="signin-title">Sign In</h1>
+          <h1 className="signin-title">Supermax POS</h1>
           {/* Role Selection */}
           <div className="signin-role-select">
             {['cashier', 'owner'].map((r) => (
@@ -163,6 +242,55 @@ export default function SignIn() {
           <button className="signin-submit-btn" onClick={handleSignIn}>Sign In</button>
         </div>
       </div>
+
+      {/* Data Sync Modal */}
+      {showSyncModal && (
+        <div className="sync-modal-overlay">
+          <div className="sync-modal">
+            <div className="sync-modal-header">
+              <h2>Welcome to Supermax POS</h2>
+              <p>First-time setup required</p>
+            </div>
+            <div className="sync-modal-content">
+              <div className="sync-icon">🔄</div>
+              <h3>Sync Data from Server</h3>
+              <p>
+                This appears to be a fresh installation. To get started, you need to sync 
+                your data from the server. This will download:
+              </p>
+              <ul>
+                <li>• Cashier accounts and PINs</li>
+                <li>• Branch information</li>
+                <li>• Owner/admin credentials</li>
+              </ul>
+              <div className="sync-warning">
+                <strong>⚠️ Important:</strong> The backend server must be running on http://localhost:5000 to sync data.
+              </div>
+              {syncError && (
+                <div className="sync-error">
+                  {syncError}
+                </div>
+              )}
+            </div>
+            <div className="sync-modal-actions">
+              <button 
+                className="sync-btn"
+                onClick={handleSyncData}
+                disabled={isSyncing}
+              >
+                {isSyncing ? 'Syncing...' : 'Sync Data Now'}
+              </button>
+              <button 
+                className="sync-skip-btn"
+                onClick={() => setShowSyncModal(false)}
+                disabled={isSyncing}
+              >
+                Skip for Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

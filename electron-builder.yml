@@ -1,5 +1,5 @@
-appId: com.pos.system
-productName: POS System
+appId: com.supermax.pos
+productName: Supermax
 directories:
   output: dist
   buildResources: build
@@ -16,7 +16,7 @@ asarUnpack:
   - resources/**
   - out/backend/**
 win:
-  executableName: pos-system
+  executableName: supermax
   sign: false
   signAndEditExecutable: false
   target:
@@ -24,7 +24,7 @@ win:
       arch:
         - x64
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  artifactName: supermax-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
@@ -54,7 +54,10 @@ appImage:
 npmRebuild: false
 forceCodeSigning: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: allano0
+  repo: pos_system
+  token: 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
+  releaseType: release
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

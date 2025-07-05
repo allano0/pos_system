@@ -1,0 +1,37 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#logoGradient)" filter="url(#shadow)"/>
+  
+  <!-- POS System Icon -->
+  <g transform="translate(100, 100)">
+    <!-- Cash register body -->
+    <rect x="-35" y="-25" width="70" height="50" rx="8" fill="white" opacity="0.9"/>
+    
+    <!-- Display screen -->
+    <rect x="-25" y="-15" width="50" height="20" rx="4" fill="#1f2937"/>
+    
+    <!-- Display text -->
+    <text x="0" y="-2" text-anchor="middle" fill="#10b981" font-family="monospace" font-size="12" font-weight="bold">POS</text>
+    
+    <!-- Cash drawer -->
+    <rect x="-30" y="10" width="60" height="8" rx="2" fill="#6b7280"/>
+    
+    <!-- Buttons -->
+    <circle cx="-15" cy="5" r="3" fill="#ef4444"/>
+    <circle cx="0" cy="5" r="3" fill="#f59e0b"/>
+    <circle cx="15" cy="5" r="3" fill="#10b981"/>
+  </g>
+  
+  <!-- Company name -->
+  <text x="100" y="170" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">POS SYSTEM</text>
+</svg> 

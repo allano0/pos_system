@@ -1,7 +1,7 @@
 {
-  "name": "pos-system",
-  "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "name": "supermax",
+  "version": "1.0.1",
+  "description": "Supermax POS System - An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
@@ -24,6 +24,7 @@
     "build:linux": "electron-vite build && electron-builder --linux",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win --publish=always",
+    "dist:win:local": "npm run build && electron-builder --win --publish=never",
     "dist:mac": "npm run build && electron-builder --mac --publish=always",
     "dist:linux": "npm run build && electron-builder --linux --publish=always"
   },
