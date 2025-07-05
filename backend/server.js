@@ -73,6 +73,24 @@ const supplierSchema = new mongoose.Schema({
 });
 const Supplier = mongoose.model('Supplier', supplierSchema);
 
+// Add Sales schema/model
+const salesSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  items: [{
+    id: String,
+    name: String,
+    price: Number,
+    quantity: Number
+  }],
+  total: Number,
+  paymentMethod: String,
+  date: String,
+  receiptNo: String,
+  userName: String,
+  lastModified: Number,
+});
+const Sales = mongoose.model('Sales', salesSchema);
+
 // Unified sync endpoint for products, branches, and cashiers
 app.post('/api/sync', async (req, res) => {
   try {
@@ -160,7 +178,26 @@ app.post('/api/sync', async (req, res) => {
     }
     const allSuppliers = await Supplier.find({});
 
-    res.json({ products: allProducts, branches: allBranches, cashiers: allCashiers, suppliers: allSuppliers });
+    // --- Sales sync ---
+    const localSales = req.body.sales || [];
+    for (const local of localSales) {
+      const dbSale = await Sales.findOne({ id: local.id });
+      if (!dbSale) {
+        await Sales.create(local);
+      } else if (local.lastModified > dbSale.lastModified) {
+        dbSale.items = local.items;
+        dbSale.total = local.total;
+        dbSale.paymentMethod = local.paymentMethod;
+        dbSale.date = local.date;
+        dbSale.receiptNo = local.receiptNo;
+        dbSale.userName = local.userName;
+        dbSale.lastModified = local.lastModified;
+        await dbSale.save();
+      }
+    }
+    const allSales = await Sales.find({});
+
+    res.json({ products: allProducts, branches: allBranches, cashiers: allCashiers, suppliers: allSuppliers, sales: allSales });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Sync failed' });
@@ -253,6 +290,27 @@ app.post('/api/products/search', async (req, res) => {
     res.json({ products: results });
   } catch (err) {
     res.status(500).json({ error: 'Failed to search products' });
+  }
+});
+
+// POST /api/sales/search endpoint
+app.post('/api/sales/search', async (req, res) => {
+  try {
+    const { receiptNo, userName, date } = req.body;
+    const query = {};
+    if (receiptNo) {
+      query.receiptNo = { $regex: receiptNo, $options: 'i' };
+    }
+    if (userName) {
+      query.userName = { $regex: userName, $options: 'i' };
+    }
+    if (date) {
+      query.date = { $regex: date, $options: 'i' };
+    }
+    const results = await Sales.find(query).sort({ date: -1 });
+    res.json({ sales: results });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to search sales' });
   }
 });
 

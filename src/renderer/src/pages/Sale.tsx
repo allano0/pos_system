@@ -96,12 +96,14 @@ export default function Sale() {
   const handlePayment = () => {
     // Generate receipt data
     const saleRecord = {
+      id: Date.now().toString(),
       items: cart,
       total,
       paymentMethod,
       date: new Date().toISOString(),
       receiptNo: 'R' + Date.now(),
       userName,
+      lastModified: Date.now(),
     };
     // Persist sale to localStorage
     try {

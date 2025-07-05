@@ -5,6 +5,7 @@ const BRANCH_STORAGE_KEY = 'pos_branches';
 const CASHIER_STORAGE_KEY = 'pos_cashiers';
 const OWNER_STORAGE_KEY = 'pos_owner';
 const SUPPLIER_STORAGE_KEY = 'pos_suppliers';
+const SALES_STORAGE_KEY = 'pos_sales';
 const SYNC_URL = 'http://localhost:5000/api/sync'; // Unified endpoint assumed
 const OWNER_URL = 'http://localhost:5000/api/owner';
 const DELETED_PRODUCT_KEY = 'pos_deleted_products';
@@ -19,6 +20,7 @@ export default function DataSync() {
   const [unsyncedBranches, setUnsyncedBranches] = useState(() => JSON.parse(localStorage.getItem(BRANCH_STORAGE_KEY) || '[]'));
   const [unsyncedCashiers, setUnsyncedCashiers] = useState(() => JSON.parse(localStorage.getItem(CASHIER_STORAGE_KEY) || '[]'));
   const [unsyncedSuppliers, setUnsyncedSuppliers] = useState(() => JSON.parse(localStorage.getItem(SUPPLIER_STORAGE_KEY) || '[]'));
+  const [unsyncedSales, setUnsyncedSales] = useState(() => JSON.parse(localStorage.getItem(SALES_STORAGE_KEY) || '[]'));
 
   function loadDeletedProductIds() {
     try {
@@ -71,6 +73,7 @@ export default function DataSync() {
           branches: unsyncedBranches,
           cashiers: unsyncedCashiers,
           suppliers: unsyncedSuppliers,
+          sales: unsyncedSales,
           deletedProductIds,
           deletedBranchIds,
           deletedCashierIds,
@@ -79,11 +82,12 @@ export default function DataSync() {
       });
       if (!res.ok) throw new Error('Sync failed');
       const data = await res.json();
-      if (Array.isArray(data.products) && Array.isArray(data.branches) && Array.isArray(data.cashiers) && Array.isArray(data.suppliers)) {
+      if (Array.isArray(data.products) && Array.isArray(data.branches) && Array.isArray(data.cashiers) && Array.isArray(data.suppliers) && Array.isArray(data.sales)) {
         localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(data.products));
         localStorage.setItem(BRANCH_STORAGE_KEY, JSON.stringify(data.branches));
         localStorage.setItem(CASHIER_STORAGE_KEY, JSON.stringify(data.cashiers));
         localStorage.setItem(SUPPLIER_STORAGE_KEY, JSON.stringify(data.suppliers));
+        localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(data.sales));
         // Fetch and persist owner
         try {
           const ownerRes = await fetch(OWNER_URL);
@@ -98,6 +102,7 @@ export default function DataSync() {
         setUnsyncedBranches([]);
         setUnsyncedCashiers([]);
         setUnsyncedSuppliers([]);
+        setUnsyncedSales([]);
         clearDeletedIds();
       } else {
         throw new Error('Invalid response');

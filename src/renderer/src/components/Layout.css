@@ -1,13 +1,27 @@
 .layout-root {
   display: flex;
-  flex-direction: column;
   min-height: 100vh;
   background: #537291;
 }
 
+.layout-sidebar {
+  width: 280px;
+  background: #fff;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+}
+
 .layout-content {
   flex: 1 0 auto;
-  padding: 16px 5px 5px 5px;
+  padding: 0;
   background: #f8fafc;
   margin-top: 0;
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTachometerAlt, FaCashRegister, FaUserPlus, FaUsersCog, FaBoxOpen, FaTruck, FaFileInvoiceDollar, FaSyncAlt, FaSignOutAlt, FaCodeBranch } from 'react-icons/fa';
+import { FaTachometerAlt, FaCashRegister, FaUserPlus, FaUsersCog, FaBoxOpen, FaTruck, FaFileInvoiceDollar, FaSyncAlt, FaSignOutAlt, FaCodeBranch, FaReceipt } from 'react-icons/fa';
 import './NavHeader.css';
 import wavyLines from '../assets/wavy-lines.svg';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ const allNavItems = [
   { label: 'Suppliers', icon: <FaTruck />, path: '/suppliers' },
   { label: 'Credit Note', icon: <FaFileInvoiceDollar />, path: '/credit-note' },
   { label: 'Branches', icon: <FaCodeBranch />, path: '/branches' },
+  { label: 'Receipts', icon: <FaReceipt />, path: '/receipts' },
   { label: 'Data Sync', icon: <FaSyncAlt />, path: '/data-sync' },
   { label: 'Log Out', icon: <FaSignOutAlt />, path: '/signin' },
 ];
@@ -57,6 +58,7 @@ export default function NavHeader({ role = 'default' }: { role?: 'default' | 'ca
           <div
             className="nav-sidebar-item"
             key={item.label}
+            data-path={item.path}
             tabIndex={0}
             onClick={() => navigate(item.path)}
             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') navigate(item.path); }}

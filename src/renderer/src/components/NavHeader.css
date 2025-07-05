@@ -32,14 +32,59 @@
 }
 
 .nav-header-icon {
-  font-size: 1.4em;
-  display: flex;
-  align-items: center;
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+/* Icon-specific colors */
+.nav-header-item[data-path="/dashboard"] .nav-header-icon {
+  color: #3182ce; /* Blue for dashboard */
+}
+
+.nav-header-item[data-path="/sale"] .nav-header-icon {
+  color: #38a169; /* Green for sales */
+}
+
+.nav-header-item[data-path="/customers"] .nav-header-icon {
+  color: #d69e2e; /* Yellow for customers */
+}
+
+.nav-header-item[data-path="/cashiers"] .nav-header-icon {
+  color: #805ad5; /* Purple for cashiers */
+}
+
+.nav-header-item[data-path="/products"] .nav-header-icon {
+  color: #e53e3e; /* Red for products */
+}
+
+.nav-header-item[data-path="/suppliers"] .nav-header-icon {
+  color: #dd6b20; /* Orange for suppliers */
+}
+
+.nav-header-item[data-path="/credit-note"] .nav-header-icon {
+  color: #319795; /* Teal for credit notes */
+}
+
+.nav-header-item[data-path="/branches"] .nav-header-icon {
+  color: #2b6cb0; /* Dark blue for branches */
+}
+
+.nav-header-item[data-path="/receipts"] .nav-header-icon {
+  color: #c53030; /* Dark red for receipts */
+}
+
+.nav-header-item[data-path="/data-sync"] .nav-header-icon {
+  color: #38b2ac; /* Light teal for sync */
+}
+
+.nav-header-item[data-path="/signin"] .nav-header-icon {
+  color: #718096; /* Gray for logout */
 }
 
 .nav-header-label {
-  display: flex;
-  align-items: center;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 1px;
 }
 
 .nav-header-cool {
@@ -271,6 +316,7 @@
   height: 100vh;
   background: #fff;
   box-shadow: 2px 0 12px rgba(30,60,114,0.10);
+  margin-right: 0px;
   display: flex;
   flex-direction: column;
   z-index: 100;
@@ -344,9 +390,29 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 12px;
-  padding: 0 0 0 0;
-  z-index: 1;
+  padding: 16px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.nav-sidebar-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav-sidebar-items::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.nav-sidebar-items::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.nav-sidebar-items::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .nav-sidebar-item {
@@ -371,20 +437,63 @@
 }
 
 .nav-sidebar-icon {
-  font-size: 1.4em;
-  display: flex;
-  align-items: center;
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+/* Sidebar icon-specific colors */
+.nav-sidebar-item[data-path="/dashboard"] .nav-sidebar-icon {
+  color: #3182ce; /* Blue for dashboard */
+}
+
+.nav-sidebar-item[data-path="/sale"] .nav-sidebar-icon {
+  color: #38a169; /* Green for sales */
+}
+
+.nav-sidebar-item[data-path="/customers"] .nav-sidebar-icon {
+  color: #d69e2e; /* Yellow for customers */
+}
+
+.nav-sidebar-item[data-path="/cashiers"] .nav-sidebar-icon {
+  color: #805ad5; /* Purple for cashiers */
+}
+
+.nav-sidebar-item[data-path="/products"] .nav-sidebar-icon {
+  color: #e53e3e; /* Red for products */
+}
+
+.nav-sidebar-item[data-path="/suppliers"] .nav-sidebar-icon {
+  color: #dd6b20; /* Orange for suppliers */
+}
+
+.nav-sidebar-item[data-path="/credit-note"] .nav-sidebar-icon {
+  color: #319795; /* Teal for credit notes */
+}
+
+.nav-sidebar-item[data-path="/branches"] .nav-sidebar-icon {
+  color: #2b6cb0; /* Dark blue for branches */
+}
+
+.nav-sidebar-item[data-path="/receipts"] .nav-sidebar-icon {
+  color: #c53030; /* Dark red for receipts */
+}
+
+.nav-sidebar-item[data-path="/data-sync"] .nav-sidebar-icon {
+  color: #38b2ac; /* Light teal for sync */
+}
+
+.nav-sidebar-item[data-path="/signin"] .nav-sidebar-icon {
+  color: #718096; /* Gray for logout */
 }
 
 .nav-sidebar-label {
-  display: flex;
-  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 /* Responsive: push content right */
-body, #root {
-  margin-left: 220px;
-}
+
 
 @media (max-width: 700px) {
   .nav-sidebar {

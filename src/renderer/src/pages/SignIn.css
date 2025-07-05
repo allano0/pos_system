@@ -3,6 +3,7 @@
   min-width: 100vw;
   display: flex;
   align-items: center;
+  margin-left: 0;
   justify-content: center;
   background: linear-gradient(135deg, #60a5fa33 0%, #e879f933 50%, #fde04733 100%);
 }

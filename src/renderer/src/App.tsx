@@ -12,6 +12,7 @@ import Suppliers from './pages/Suppliers'
 import CreditNote from './pages/CreditNote'
 import DataSync from './pages/DataSync'
 import Branches from './pages/Branches'
+import Receipts from './pages/Receipts'
 
 function getRole(): 'default' | 'cashier' {
   const val = sessionStorage.getItem('role');
@@ -37,6 +38,8 @@ function App(): React.JSX.Element {
         <Route path="/credit-note" element={<Layout role={role}><CreditNote /></Layout>} />
         <Route path="/data-sync" element={<Layout role={role}><DataSync /></Layout>} />
         <Route path="/branches" element={<Layout role={role}><Branches /></Layout>} />
+        <Route path="/receipts" element={<Layout role={role}><Receipts /></Layout>} />
+        <Route path="/dashboard" element={<Layout role={role}><OwnerDashboard /></Layout>} />
         <Route path="*" element={
           <Layout role={role}>
             <img alt="logo" className="logo" src={electronLogo} />
