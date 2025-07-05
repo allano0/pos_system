@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: supermax-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        value: mongodb+srv://allano2921:allano@cluster0.83ourjh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0 

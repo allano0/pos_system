@@ -1,5 +1,5 @@
 {
-  "name": "pos-backend",
+  "name": "supermax-backend",
   "version": "1.0.0",
   "main": "server.js",
   "type": "module",
@@ -15,5 +15,8 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 } 

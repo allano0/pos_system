@@ -14,8 +14,8 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Supermax POS Backend is running!', timestamp: new Date().toISOString() });
 });
 
-const PORT =  5000;
-const MONGODB_URI = 'mongodb+srv://allano2921:allano@cluster0.83ourjh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const PORT = process.env.PORT || 5000;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://allano2921:allano@cluster0.83ourjh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))

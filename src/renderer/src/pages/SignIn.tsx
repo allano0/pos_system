@@ -63,7 +63,7 @@ export default function SignIn() {
     try {
       // Determine backend URL based on environment
       const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-      const baseUrl = isDev ? 'http://localhost:5000' : 'http://localhost:5000'; // Same for now since backend is bundled
+      const baseUrl = isDev ? 'http://localhost:5000' : 'https://supermax-backend.onrender.com'; // Use Render URL for production
       console.log('Environment:', isDev ? 'Development' : 'Production');
       console.log('Attempting to connect to backend at:', baseUrl);
       
@@ -134,7 +134,7 @@ export default function SignIn() {
     } catch (error) {
       console.error('Sync error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setSyncError(`Failed to sync data: ${errorMessage}. Please try restarting the application.`);
+      setSyncError(`Failed to sync data: ${errorMessage}. Please check your internet connection and try again.`);
     } finally {
       setIsSyncing(false);
     }
@@ -279,7 +279,7 @@ export default function SignIn() {
                 <li>• Owner/admin credentials</li>
               </ul>
               <div className="sync-warning">
-                <strong>⚠️ Important:</strong> The backend server will start automatically. If sync fails, please restart the application.
+                <strong>⚠️ Important:</strong> You need an internet connection to sync data from the cloud server.
               </div>
               {syncError && (
                 <div className="sync-error">
