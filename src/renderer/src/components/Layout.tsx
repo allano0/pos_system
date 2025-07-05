@@ -1,12 +1,12 @@
 import React from 'react';
-import NavHeader, { CashierNavHeader } from './NavHeader';
+import NavHeader from './NavHeader';
 import './Layout.css';
 
 export default function Layout({ children, role = 'default' }: { children: React.ReactNode, role?: 'default' | 'cashier' }) {
   return (
     <div className="layout-root">
       <div className="layout-sidebar">
-        {role === 'cashier' ? <CashierNavHeader /> : <NavHeader />}
+        <NavHeader role={role} />
       </div>
       <div className="layout-main">
         <div className="layout-content">{children}</div>

@@ -22,17 +22,6 @@ interface CartItem extends Product {
   quantity: number;
 }
 
-// Add type for window.api
-declare global {
-  interface Window {
-    api?: {
-      printReceipt: () => Promise<any>;
-      listPrinters: () => Promise<any>;
-      printReceiptContent: (content: string) => Promise<any>;
-    };
-  }
-}
-
 export default function Sale() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);

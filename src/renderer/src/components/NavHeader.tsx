@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTachometerAlt, FaCashRegister, FaUserPlus, FaUsersCog, FaBoxOpen, FaTruck, FaFileInvoiceDollar, FaSyncAlt, FaSignOutAlt, FaCodeBranch, FaReceipt } from 'react-icons/fa';
+import { FaTachometerAlt, FaCashRegister, FaUserPlus, FaUsersCog, FaBoxOpen, FaTruck, FaFileInvoiceDollar, FaSyncAlt, FaSignOutAlt, FaCodeBranch, FaReceipt, FaCog } from 'react-icons/fa';
 import './NavHeader.css';
 import wavyLines from '../assets/wavy-lines.svg';
 import { useNavigate } from 'react-router-dom';
@@ -15,18 +15,11 @@ const allNavItems = [
   { label: 'Branches', icon: <FaCodeBranch />, path: '/branches' },
   { label: 'Receipts', icon: <FaReceipt />, path: '/receipts' },
   { label: 'Data Sync', icon: <FaSyncAlt />, path: '/data-sync' },
+  { label: 'Settings', icon: <FaCog />, path: '/settings' },
   { label: 'Log Out', icon: <FaSignOutAlt />, path: '/signin' },
 ];
 
-const cashierNavItems = [
-  { label: 'Sale', icon: <FaCashRegister />, path: '/sale' },
-  { label: 'Customers', icon: <FaUserPlus />, path: '/customers' },
-  { label: 'Products', icon: <FaBoxOpen />, path: '/products' },
-  { label: 'Suppliers', icon: <FaTruck />, path: '/suppliers' },
-  { label: 'Credit Note', icon: <FaFileInvoiceDollar />, path: '/credit-note' },
-  { label: 'Data Sync', icon: <FaSyncAlt />, path: '/data-sync' },
-  { label: 'Log Out', icon: <FaSignOutAlt />, path: '/signin' },
-];
+
 
 function getUserName() {
   return sessionStorage.getItem('userName') || 'User';
@@ -39,7 +32,25 @@ export default function NavHeader({ role = 'default' }: { role?: 'default' | 'ca
   const navigate = useNavigate();
   const userName = getUserName();
   const userInitials = getInitials(userName);
-  const navItems = role === 'cashier' ? cashierNavItems : allNavItems;
+  
+  // Debug: Log the role and sessionStorage
+  console.log('NavHeader - Role:', role);
+  console.log('NavHeader - SessionStorage role:', sessionStorage.getItem('role'));
+  
+  // Filter nav items based on role
+  const getNavItems = () => {
+    if (role === 'cashier') {
+      console.log('Filtering out Dashboard and Cashiers for cashier role');
+      return allNavItems.filter(item => 
+        item.label !== 'Dashboard' && 
+        item.label !== 'Cashiers'
+      );
+    }
+    console.log('Showing all nav items for default role');
+    return allNavItems;
+  };
+  
+  const navItems = getNavItems();
   return (
     <aside className="nav-sidebar">
       <div className="nav-sidebar-header">
@@ -74,6 +85,4 @@ export default function NavHeader({ role = 'default' }: { role?: 'default' | 'ca
   );
 }
 
-export function CashierNavHeader() {
-  return <NavHeader role="cashier" />;
-} 
+ 

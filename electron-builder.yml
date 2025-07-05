@@ -13,11 +13,19 @@ asarUnpack:
   - resources/**
 win:
   executableName: pos-system
+  target:
+    - target: nsis
+      arch:
+        - x64
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createStartMenuShortcut: true
+  runAfterFinish: true
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
@@ -39,7 +47,10 @@ appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: YOUR_GITHUB_USERNAME
+  repo: pos_system
+  private: false
+  releaseType: release
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

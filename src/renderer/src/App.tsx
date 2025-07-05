@@ -13,10 +13,16 @@ import CreditNote from './pages/CreditNote'
 import DataSync from './pages/DataSync'
 import Branches from './pages/Branches'
 import Receipts from './pages/Receipts'
+import Settings from './pages/Settings'
 
 function getRole(): 'default' | 'cashier' {
   const val = sessionStorage.getItem('role');
-  if (val === 'cashier') return 'cashier';
+  console.log('App - SessionStorage role value:', val);
+  if (val === 'cashier') {
+    console.log('App - Returning cashier role');
+    return 'cashier';
+  }
+  console.log('App - Returning default role');
   return 'default';
 }
 
@@ -39,6 +45,7 @@ function App(): React.JSX.Element {
         <Route path="/data-sync" element={<Layout role={role}><DataSync /></Layout>} />
         <Route path="/branches" element={<Layout role={role}><Branches /></Layout>} />
         <Route path="/receipts" element={<Layout role={role}><Receipts /></Layout>} />
+        <Route path="/settings" element={<Layout role={role}><Settings /></Layout>} />
         <Route path="/dashboard" element={<Layout role={role}><OwnerDashboard /></Layout>} />
         <Route path="*" element={
           <Layout role={role}>

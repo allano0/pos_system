@@ -6,6 +6,11 @@ const api = {
   printReceipt: () => ipcRenderer.invoke('print-receipt'),
   listPrinters: () => ipcRenderer.invoke('list-printers'),
   printReceiptContent: (html: string) => ipcRenderer.invoke('print-receipt-content', html),
+  // Update APIs
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

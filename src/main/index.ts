@@ -1,10 +1,63 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { spawn } from 'child_process'
+import { autoUpdater } from 'electron-updater'
 
 let backendProcess: ReturnType<typeof spawn> | null = null
+
+// Configure auto updater
+autoUpdater.autoDownload = false
+autoUpdater.autoInstallOnAppQuit = true
+
+// Update events
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for updates...')
+})
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available:', info)
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Update Available',
+    message: 'A new version is available. Would you like to download it now?',
+    buttons: ['Yes', 'No'],
+    defaultId: 0
+  }).then((result) => {
+    if (result.response === 0) {
+      autoUpdater.downloadUpdate()
+    }
+  })
+})
+
+autoUpdater.on('update-not-available', () => {
+  console.log('Update not available')
+})
+
+autoUpdater.on('error', (err) => {
+  console.log('Error in auto-updater:', err)
+  dialog.showErrorBox('Update Error', 'Error checking for updates: ' + err.message)
+})
+
+autoUpdater.on('download-progress', (progressObj) => {
+  console.log('Download progress:', progressObj)
+})
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded:', info)
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Update Ready',
+    message: 'Update downloaded. The application will restart to install the update.',
+    buttons: ['Restart Now', 'Later'],
+    defaultId: 0
+  }).then((result) => {
+    if (result.response === 0) {
+      autoUpdater.quitAndInstall()
+    }
+  })
+})
 
 function startBackend() {
   backendProcess = spawn('node', ['backend/server.js'], {
@@ -141,9 +194,46 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+  // IPC handlers for updates
+  ipcMain.handle('check-for-updates', async () => {
+    try {
+      const result = await autoUpdater.checkForUpdates()
+      return { success: true, result }
+    } catch (error) {
+      console.error('Error checking for updates:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  })
+
+  ipcMain.handle('download-update', async () => {
+    try {
+      await autoUpdater.downloadUpdate()
+      return { success: true }
+    } catch (error) {
+      console.error('Error downloading update:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  })
+
+  ipcMain.handle('install-update', () => {
+    autoUpdater.quitAndInstall()
+    return { success: true }
+  })
+
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion()
+  })
+
   startBackend()
 
   createWindow()
+
+  // Check for updates on app start (only in production)
+  if (!is.dev) {
+    setTimeout(() => {
+      autoUpdater.checkForUpdates()
+    }, 3000) // Check after 3 seconds
+  }
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
