@@ -14,6 +14,7 @@ import DataSync from './pages/DataSync'
 import Branches from './pages/Branches'
 import Receipts from './pages/Receipts'
 import Settings from './pages/Settings'
+import Invoice from './pages/Invoice'
 
 function getRole(): 'default' | 'cashier' {
   const val = sessionStorage.getItem('role');
@@ -47,6 +48,7 @@ function App(): React.JSX.Element {
         <Route path="/receipts" element={<Layout role={role}><Receipts /></Layout>} />
         <Route path="/settings" element={<Layout role={role}><Settings /></Layout>} />
         <Route path="/dashboard" element={<Layout role={role}><OwnerDashboard /></Layout>} />
+        <Route path="/invoice" element={<Layout role={role}><Invoice /></Layout>} />
         <Route path="*" element={
           <Layout role={role}>
             <img alt="logo" className="logo" src={electronLogo} />

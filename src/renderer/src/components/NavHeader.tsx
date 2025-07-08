@@ -1,5 +1,7 @@
 import React from 'react';
-import { FaTachometerAlt, FaCashRegister, FaUserPlus, FaUsersCog, FaBoxOpen, FaTruck, FaFileInvoiceDollar, FaSyncAlt, FaSignOutAlt, FaCodeBranch, FaReceipt, FaCog } from 'react-icons/fa';
+import { 
+  FaTachometerAlt, FaCashRegister, FaUserPlus, FaUsersCog, FaBoxOpen, FaTruck, FaFileInvoiceDollar, FaSyncAlt, FaSignOutAlt, FaCodeBranch, FaReceipt, FaCog, FaFileAlt 
+} from 'react-icons/fa';
 import './NavHeader.css';
 import wavyLines from '../assets/wavy-lines.svg';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +14,7 @@ const allNavItems = [
   { label: 'Products', icon: <FaBoxOpen />, path: '/products' },
   { label: 'Suppliers', icon: <FaTruck />, path: '/suppliers' },
   { label: 'Credit Note', icon: <FaFileInvoiceDollar />, path: '/credit-note' },
+  { label: 'Invoice', icon: <FaFileAlt />, path: '/invoice' },
   { label: 'Branches', icon: <FaCodeBranch />, path: '/branches' },
   { label: 'Receipts', icon: <FaReceipt />, path: '/receipts' },
   { label: 'Data Sync', icon: <FaSyncAlt />, path: '/data-sync' },
@@ -39,7 +42,7 @@ export default function NavHeader({ role = 'default' }: { role?: 'default' | 'ca
   
   // Filter nav items based on role
   const getNavItems = () => {
-    if (role === 'cashier') {
+    if (role === 'default') {
       console.log('Filtering out Dashboard and Cashiers for cashier role');
       return allNavItems.filter(item => 
         item.label !== 'Dashboard' && 
