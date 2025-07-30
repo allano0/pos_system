@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './SignIn.css';
+import hero from '../assets/hero.png';
 
 const keypadNumbers = [1,2,3,4,5,6,7,8,9,0];
 const CASHIER_STORAGE_KEY = 'supermax_cashiers';
@@ -131,6 +132,15 @@ export default function SignIn() {
       const suppliers = await suppliersResponse.json();
       console.log('Suppliers fetched:', suppliers.length, 'records');
       
+      // Fetch customers
+      console.log('Fetching customers...');
+      const customersResponse = await fetch(`${baseUrl}/api/customers`);
+      if (!customersResponse.ok) {
+        throw new Error(`Failed to fetch customers: ${customersResponse.status}`);
+      }
+      const customers = await customersResponse.json();
+      console.log('Customers fetched:', customers.length, 'records');
+      
       // Fetch owner/admin data
       console.log('Fetching owner data...');
       const ownerResponse = await fetch(`${baseUrl}/api/owner`);
@@ -146,6 +156,7 @@ export default function SignIn() {
       localStorage.setItem(OWNER_STORAGE_KEY, JSON.stringify(owner));
       localStorage.setItem('pos_products', JSON.stringify(products));
       localStorage.setItem('pos_suppliers', JSON.stringify(suppliers));
+      localStorage.setItem('pos_customers', JSON.stringify(customers));
       
       console.log('Data successfully stored in localStorage');
       setShowSyncModal(false);
@@ -192,7 +203,7 @@ export default function SignIn() {
       <div className="signin-card">
         {/* Left: Hero Image */}
         <div className="signin-image-section">
-          <img src="/src/assets/hero.png" alt="POS System Hero" className="signin-hero" draggable="false" />
+          <img src={hero} alt="POS System Hero" className="signin-hero" draggable="false" />
         </div>
         {/* Right: Sign In Form */}
         <div className="signin-form-section">

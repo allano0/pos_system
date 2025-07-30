@@ -263,6 +263,16 @@ app.get('/api/suppliers', async (req, res) => {
   }
 });
 
+// GET /api/customers endpoint
+app.get('/api/customers', async (req, res) => {
+  try {
+    const customers = await Customer.find({});
+    res.json(customers);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch customers' });
+  }
+});
+
 // POST /api/cashiers/search endpoint
 app.post('/api/cashiers/search', async (req, res) => {
   try {
