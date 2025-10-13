@@ -88,28 +88,32 @@ export default function OwnerDashboard() {
   // Low stock items (stock <= 5)
   const lowStock = products.filter((p: any) => p.stock <= 5);
 
-  // Best performing items (by quantity sold)
-  const itemSales: { [id: string]: { name: string; qty: number } } = {};
-  sales.forEach(sale => {
-    sale.items.forEach((item: any) => {
-      if (!itemSales[item.id]) itemSales[item.id] = { name: item.name, qty: 0 };
-      itemSales[item.id].qty += item.quantity;
+  // Best performing items (by quantity sold) - using filtered sales
+  const bestItems = useMemo(() => {
+    const itemSales: { [id: string]: { name: string; qty: number } } = {};
+    filteredSales.forEach(sale => {
+      sale.items.forEach((item: any) => {
+        if (!itemSales[item.id]) itemSales[item.id] = { name: item.name, qty: 0 };
+        itemSales[item.id].qty += item.quantity;
+      });
     });
-  });
-  const bestItems = Object.values(itemSales).sort((a, b) => b.qty - a.qty).slice(0, 5);
+    return Object.values(itemSales).sort((a, b) => b.qty - a.qty).slice(0, 5);
+  }, [filteredSales]);
 
-  // Cashiers with most sales (by total sales amount)
-  const cashierSales: { [name: string]: number } = {};
-  sales.forEach(sale => {
-    cashierSales[sale.userName] = (cashierSales[sale.userName] || 0) + sale.total;
-  });
-  const topCashiers = Object.entries(cashierSales)
-    .map(([name, total]) => ({ name, total }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5);
+  // Cashiers with most sales (by total sales amount) - using filtered sales
+  const topCashiers = useMemo(() => {
+    const cashierSales: { [name: string]: number } = {};
+    filteredSales.forEach(sale => {
+      cashierSales[sale.userName] = (cashierSales[sale.userName] || 0) + sale.total;
+    });
+    return Object.entries(cashierSales)
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  }, [filteredSales]);
 
-  // Chart data
-  const salesLineData = {
+  // Chart data - reactive to filtered data
+  const salesLineData = useMemo(() => ({
     labels: Object.keys(salesByDay),
     datasets: [
       {
@@ -120,9 +124,9 @@ export default function OwnerDashboard() {
         fill: true,
       },
     ],
-  };
+  }), [salesByDay]);
 
-  const bestItemsData = {
+  const bestItemsData = useMemo(() => ({
     labels: bestItems.map(i => i.name),
     datasets: [
       {
@@ -133,9 +137,9 @@ export default function OwnerDashboard() {
         ],
       },
     ],
-  };
+  }), [bestItems]);
 
-  const topCashiersData = {
+  const topCashiersData = useMemo(() => ({
     labels: topCashiers.map(c => c.name),
     datasets: [
       {
@@ -146,7 +150,7 @@ export default function OwnerDashboard() {
         ],
       },
     ],
-  };
+  }), [topCashiers]);
 
   return (
     <div style={{ padding: 32, maxWidth: 1400, margin: '0 auto' }}>

@@ -559,6 +559,86 @@ app.post('/api/customers/search', async (req, res) => {
   }
 });
 
+// Change password endpoint
+app.post('/api/change-password', async (req, res) => {
+  try {
+    const { username, currentPassword, newPassword, role } = req.body;
+    
+    if (!username || !currentPassword || !newPassword || !role) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Validate new password is 4 digits
+    if (!/^\d{4}$/.test(newPassword)) {
+      return res.status(400).json({ error: 'New PIN must be exactly 4 digits' });
+    }
+    
+    if (role === 'owner') {
+      // Update owner PIN
+      const owner = await Owner.findOne({ name: username });
+      if (!owner) {
+        return res.status(404).json({ error: 'Owner not found' });
+      }
+      
+      // Verify current password
+      if (owner.pin !== currentPassword) {
+        return res.status(401).json({ error: 'Current PIN is incorrect' });
+      }
+      
+      // Update PIN
+      owner.pin = newPassword;
+      owner.lastModified = Date.now();
+      await owner.save();
+      
+      res.json({ 
+        message: 'PIN changed successfully',
+        user: {
+          id: owner.id,
+          name: owner.name,
+          pin: owner.pin,
+          role: owner.role,
+          lastModified: owner.lastModified
+        }
+      });
+      
+    } else if (role === 'cashier') {
+      // Update cashier PIN
+      const cashier = await Cashier.findOne({ name: username });
+      if (!cashier) {
+        return res.status(404).json({ error: 'Cashier not found' });
+      }
+      
+      // Verify current password
+      if (cashier.pin !== currentPassword) {
+        return res.status(401).json({ error: 'Current PIN is incorrect' });
+      }
+      
+      // Update PIN
+      cashier.pin = newPassword;
+      cashier.lastModified = Date.now();
+      await cashier.save();
+      
+      res.json({ 
+        message: 'PIN changed successfully',
+        user: {
+          id: cashier.id,
+          name: cashier.name,
+          pin: cashier.pin,
+          branchId: cashier.branchId,
+          lastModified: cashier.lastModified
+        }
+      });
+      
+    } else {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'Failed to change PIN' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 }); 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { FaCog, FaInfoCircle, FaShieldAlt, FaDatabase, FaUser, FaClock } from 'react-icons/fa'
+import { FaCog, FaInfoCircle, FaShieldAlt, FaDatabase, FaUser, FaClock, FaKey } from 'react-icons/fa'
 import UpdateChecker from '../components/UpdateChecker'
+import ChangePassword from '../components/ChangePassword'
 
 export default function Settings() {
   const [appVersion, setAppVersion] = useState<string>('1.0.0')
@@ -184,6 +185,29 @@ export default function Settings() {
             </div>
           </div>
         </div>
+
+        {/* Change Password - Only for Owner */}
+        {getUserRole() !== 'Cashier' && (
+          <div>
+            <h3 style={{ 
+              marginBottom: 16, 
+              fontSize: 24, 
+              fontWeight: 600, 
+              color: '#374151',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <FaKey style={{ marginRight: 8, color: '#DC2626' }} />
+              Change Password
+            </h3>
+            <ChangePassword 
+              onPasswordChanged={() => {
+                // Optional: Show success message or refresh user info
+                console.log('Password changed successfully')
+              }}
+            />
+          </div>
+        )}
 
         {/* System Status */}
         <div>
