@@ -191,7 +191,7 @@ export default function Products() {
     try {
       // Determine backend URL based on environment
       const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-      const baseUrl = isDev ? 'http://localhost:5000' : 'https://supermax-backend.onrender.com';
+      const baseUrl = isDev ? 'http://localhost:5000' : 'https://SAMTECH-backend.onrender.com';
       
       // Fetch fresh data from server
       const [productsRes, suppliersRes] = await Promise.all([
@@ -505,29 +505,29 @@ export default function Products() {
               }}>
                 <label style={{ fontWeight: 600, color: '#223', display: 'flex', flexDirection: 'column', gap: 4 }}>
                   Name
-                  <input name="name" placeholder="Name" value={form.name} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }} required />
+                  <input name="name" placeholder="Name" value={form.name} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required />
                 </label>
                 <label style={{ fontWeight: 600, color: '#223', display: 'flex', flexDirection: 'column', gap: 4 }}>
                   Category
-                  <input name="category" placeholder="Category" value={form.category} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }} required />
+                  <input name="category" placeholder="Category" value={form.category} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required />
                 </label>
                 <label style={{ fontWeight: 600, color: '#223', display: 'flex', flexDirection: 'column', gap: 4 }}>
                   Description
-                  <textarea name="description" placeholder="Description" value={form.description} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', minHeight: 60, fontSize: 15 }} />
+                  <textarea name="description" placeholder="Description" value={form.description} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', minHeight: 60, fontSize: 15, width: '100%', boxSizing: 'border-box', resize: 'vertical' }} />
                 </label>
-                <div style={{ display: 'flex', gap: 16 }}>
+                <div style={{ display: 'flex', gap: 12 }}>
                   <label style={{ fontWeight: 600, color: '#223', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                     Price
-                    <input name="price" type="number" placeholder="Price" value={form.price} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }} required min={0} step={0.01} />
+                    <input name="price" type="number" placeholder="Price" value={form.price} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} step={0.01} />
                   </label>
                   <label style={{ fontWeight: 600, color: '#223', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
                     Stock
-                    <input name="stock" type="number" placeholder="Stock" value={form.stock} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }} required min={0} />
+                    <input name="stock" type="number" placeholder="Stock" value={form.stock} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} />
                   </label>
                 </div>
                 <label style={{ fontWeight: 600, color: '#223', display: 'flex', flexDirection: 'column', gap: 4 }}>
                   Supplier
-                  <select name="supplier" value={form.supplier} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15 }} required>
+                  <select name="supplier" value={form.supplier} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required>
                     <option value="">Select supplier</option>
                     {suppliers.map(s => (
                       <option key={s.id} value={s.name}>{s.name}</option>

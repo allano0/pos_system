@@ -1,5 +1,5 @@
-appId: com.supermax.pos
-productName: Supermax
+appId: com.SAMTECH.pos
+productName: SAMTECH
 directories:
   output: dist
   buildResources: build
@@ -17,7 +17,7 @@ asarUnpack:
   - resources/**
   - out/backend/**
 win:
-  executableName: supermax
+  executableName: SAMTECH
   sign: false
   signAndEditExecutable: false
   target:
@@ -25,7 +25,7 @@ win:
       arch:
         - x64
 nsis:
-  artifactName: supermax-${version}-setup.${ext}
+  artifactName: SAMTECH-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
@@ -57,9 +57,9 @@ forceCodeSigning: false
 publish:
   provider: github
   owner: allano0
-  repo: pos_system
-  # Note: Token should be set via environment variable GITHUB_TOKEN for security
-  # token: ${env.GITHUB_TOKEN}
+  repo: forou_pos_system_releases
+  # Note: Token should be set via environment variable GH_TOKEN for security
+  # token: ${env.GH_TOKEN}
   releaseType: release
   # Ensure releases are publicly accessible
   private: false

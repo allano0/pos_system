@@ -4,9 +4,9 @@ import './SignIn.css';
 import hero from '../assets/hero.png';
 
 const keypadNumbers = [1,2,3,4,5,6,7,8,9,0];
-const CASHIER_STORAGE_KEY = 'supermax_cashiers';
-const BRANCH_STORAGE_KEY = 'supermax_branches';
-const OWNER_STORAGE_KEY = 'supermax_owner';
+const CASHIER_STORAGE_KEY = 'SAMTECH_cashiers';
+const BRANCH_STORAGE_KEY = 'SAMTECH_branches';
+const OWNER_STORAGE_KEY = 'SAMTECH_owner';
 
 function getCashiers() {
   try {
@@ -64,7 +64,7 @@ export default function SignIn() {
     try {
       // Determine backend URL based on environment
       const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-      const baseUrl = isDev ? 'http://localhost:5000' : 'https://supermax-backend.onrender.com'; // Use Render URL for production
+      const baseUrl = isDev ? 'http://localhost:5000' : 'https://SAMTECH-backend.onrender.com'; // Use Render URL for production
       console.log('Environment:', isDev ? 'Development' : 'Production');
       console.log('Attempting to connect to backend at:', baseUrl);
       
@@ -207,7 +207,7 @@ export default function SignIn() {
         </div>
         {/* Right: Sign In Form */}
         <div className="signin-form-section">
-          <h1 className="signin-title">Supermax POS</h1>
+          <h1 className="signin-title">SAMTECH POS</h1>
           {/* Role Selection */}
           <div className="signin-role-select">
             {['cashier', 'owner'].map((r) => (
@@ -294,7 +294,7 @@ export default function SignIn() {
         <div className="sync-modal-overlay">
           <div className="sync-modal">
             <div className="sync-modal-header">
-              <h2>Welcome to Supermax POS</h2>
+              <h2>Welcome to SAMTECH POS</h2>
               <p>First-time setup required</p>
             </div>
             <div className="sync-modal-content">

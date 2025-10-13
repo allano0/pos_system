@@ -76,7 +76,7 @@ export default function Cashiers() {
   useEffect(() => {
     const role = sessionStorage.getItem('role');
     if (role === 'cashier') {
-      navigate('/cashier-dashboard', { replace: true });
+      navigate('/sale', { replace: true });
     }
   }, [navigate]);
 

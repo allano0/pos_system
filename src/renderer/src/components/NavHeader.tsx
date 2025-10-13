@@ -30,26 +30,31 @@ function getUserName() {
 function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
 }
+function getRole() {
+  return sessionStorage.getItem('role');
+}
 
 export default function NavHeader({ role = 'default' }: { role?: 'default' | 'cashier' }) {
   const navigate = useNavigate();
   const userName = getUserName();
   const userInitials = getInitials(userName);
+  const userRole = getRole();
   
   // Debug: Log the role and sessionStorage
-  console.log('NavHeader - Role:', role);
-  console.log('NavHeader - SessionStorage role:', sessionStorage.getItem('role'));
+  console.log('NavHeader - Role prop:', role);
+  console.log('NavHeader - SessionStorage role:', userRole);
   
   // Filter nav items based on role
   const getNavItems = () => {
-    if (role === 'default') {
-      console.log('Filtering out Dashboard and Cashiers for cashier role');
+    if (userRole === 'cashier') {
+      console.log('Filtering out restricted items for cashier role');
       return allNavItems.filter(item => 
         item.label !== 'Dashboard' && 
-        item.label !== 'Cashiers'
+        item.label !== 'Cashiers' &&
+        item.label !== 'Branches'
       );
     }
-    console.log('Showing all nav items for default role');
+    console.log('Showing all nav items for default (owner) role');
     return allNavItems;
   };
   
@@ -58,7 +63,7 @@ export default function NavHeader({ role = 'default' }: { role?: 'default' | 'ca
     <aside className="nav-sidebar">
       <div className="nav-sidebar-header">
         <img src={wavyLines} alt="bg" className="nav-sidebar-wavy" />
-        <div className="nav-sidebar-title"> SuperMax POS System <span className="nav-sidebar-emoji">💸</span></div>
+        <div className="nav-sidebar-title"> SAMTECH POS System <span className="nav-sidebar-emoji">💸</span></div>
         <div className="nav-sidebar-subtitle">Fast. Reliable. Modern.</div>
         <div className="nav-sidebar-avatar" title={userName}>
           <span>{userInitials}</span>

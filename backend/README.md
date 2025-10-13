@@ -1,6 +1,6 @@
-# Supermax Backend
+# SAMTECH Backend
 
-This is the backend server for the Supermax POS system.
+This is the backend server for the SAMTECH POS system.
 
 ## Deployment on Render
 
@@ -10,7 +10,7 @@ This is the backend server for the Supermax POS system.
 2. Click "New +" and select "Web Service"
 3. Connect your GitHub repository
 4. Configure the service:
-   - **Name**: `supermax-backend`
+   - **Name**: `SAMTECH-backend`
    - **Environment**: `Node`
    - **Build Command**: `cd backend && npm install`
    - **Start Command**: `cd backend && npm start`

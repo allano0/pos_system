@@ -4,6 +4,8 @@ import electronLogo from './assets/electron.svg'
 import SignIn from './pages/SignIn'
 import OwnerDashboard from './pages/OwnerDashboard'
 import Layout from './components/Layout'
+import ProtectedRoute from './components/ProtectedRoute'
+import OfflineIndicator from './components/OfflineIndicator'
 import Sale from './pages/Sale'
 import Customers from './pages/Customers'
 import Cashiers from './pages/Cashiers'
@@ -33,21 +35,22 @@ function App(): React.JSX.Element {
 
   return (
     <HashRouter>
+      <OfflineIndicator />
       <Routes>
         <Route path="/" element={<SignIn />} />
         <Route path="/signin" element={<SignIn />} />
-        <Route path="/owner-dashboard" element={<Layout role={role}><OwnerDashboard /></Layout>} />
+        <Route path="/owner-dashboard" element={<Layout role={role}><ProtectedRoute allowedRoles={['default']}><OwnerDashboard /></ProtectedRoute></Layout>} />
         <Route path="/sale" element={<Layout role={role}><Sale /></Layout>} />
         <Route path="/customers" element={<Layout role={role}><Customers /></Layout>} />
-        <Route path="/cashiers" element={<Layout role={role}><Cashiers /></Layout>} />
+        <Route path="/cashiers" element={<Layout role={role}><ProtectedRoute allowedRoles={['default']}><Cashiers /></ProtectedRoute></Layout>} />
         <Route path="/products" element={<Layout role={role}><Products /></Layout>} />
         <Route path="/suppliers" element={<Layout role={role}><Suppliers /></Layout>} />
         <Route path="/credit-note" element={<Layout role={role}><CreditNote /></Layout>} />
         <Route path="/data-sync" element={<Layout role={role}><DataSync /></Layout>} />
-        <Route path="/branches" element={<Layout role={role}><Branches /></Layout>} />
+        <Route path="/branches" element={<Layout role={role}><ProtectedRoute allowedRoles={['default']}><Branches /></ProtectedRoute></Layout>} />
         <Route path="/receipts" element={<Layout role={role}><Receipts /></Layout>} />
         <Route path="/settings" element={<Layout role={role}><Settings /></Layout>} />
-        <Route path="/dashboard" element={<Layout role={role}><OwnerDashboard /></Layout>} />
+        <Route path="/dashboard" element={<Layout role={role}><ProtectedRoute allowedRoles={['default']}><OwnerDashboard /></ProtectedRoute></Layout>} />
         <Route path="/invoice" element={<Layout role={role}><Invoice /></Layout>} />
         <Route path="*" element={
           <Layout role={role}>

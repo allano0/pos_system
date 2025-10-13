@@ -3,8 +3,13 @@ import React, { useState, useEffect, useRef } from 'react';
 interface Product {
   id: string;
   name: string;
+  category: string;
+  description: string;
   price: number;
   stock: number;
+  supplier: string;
+  lastModified: number;
+  modifiedBy?: string;
 }
 
 interface InvoiceItem extends Product {
@@ -37,7 +42,28 @@ const CUSTOMER_STORAGE_KEY = 'pos_customers';
 function loadProducts(): Product[] {
   try {
     const data = localStorage.getItem(PRODUCT_STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const products = data ? JSON.parse(data) : [];
+    
+    // Migrate existing products to include new fields
+    const migratedProducts = products.map((product: any) => ({
+      id: product.id,
+      name: product.name,
+      category: product.category || 'General',
+      description: product.description || 'No description available',
+      price: product.price,
+      stock: product.stock,
+      supplier: product.supplier || 'Unknown',
+      lastModified: product.lastModified || Date.now(),
+      modifiedBy: product.modifiedBy || 'System'
+    }));
+    
+    // Save migrated products back to localStorage if migration occurred
+    const needsMigration = products.some((product: any) => !product.category || !product.description);
+    if (needsMigration && migratedProducts.length > 0) {
+      localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(migratedProducts));
+    }
+    
+    return migratedProducts;
   } catch {
     return [];
   }
@@ -212,16 +238,112 @@ export default function Invoice() {
                 ) : paginatedProducts.map(product => (
                   <div
                     key={product.id}
-                    style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #0001', padding: 18, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10, minHeight: 140, position: 'relative', border: '1.5px solid #e3eefe' }}
+                    style={{ 
+                      background: '#fff', 
+                      borderRadius: 12, 
+                      boxShadow: '0 2px 8px #0001', 
+                      padding: 18, 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'flex-start', 
+                      gap: 8, 
+                      minHeight: 200, 
+                      position: 'relative', 
+                      border: '1.5px solid #e3eefe' 
+                    }}
                   >
-                    <div style={{ fontWeight: 700, fontSize: 18, color: '#223', marginBottom: 2 }}>{product.name}</div>
-                    <div style={{ color: '#3182ce', fontWeight: 600, fontSize: 16 }}>Ksh {product.price.toFixed(2)}</div>
-                    <div style={{ color: '#888', fontSize: 14 }}>Stock: {product.stock}</div>
+                    {/* Product Name */}
+                    <div style={{ fontWeight: 700, fontSize: 18, color: '#223', marginBottom: 2, lineHeight: 1.2 }}>
+                      {product.name}
+                    </div>
+                    
+                    {/* Category */}
+                    {product.category && (
+                      <div style={{ 
+                        background: '#f0f9ff', 
+                        color: '#0369a1', 
+                        padding: '2px 8px', 
+                        borderRadius: 4, 
+                        fontSize: 12, 
+                        fontWeight: 600,
+                        marginBottom: 4
+                      }}>
+                        {product.category}
+                      </div>
+                    )}
+                    
+                    {/* Description */}
+                    {product.description && (
+                      <div style={{ 
+                        color: '#666', 
+                        fontSize: 13, 
+                        lineHeight: 1.3,
+                        marginBottom: 6,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {product.description}
+                      </div>
+                    )}
+                    
+                    {/* Price */}
+                    <div style={{ color: '#3182ce', fontWeight: 600, fontSize: 16, marginBottom: 4 }}>
+                      Ksh {product.price.toFixed(2)}
+                    </div>
+                    
+                    {/* Stock */}
+                    <div style={{ 
+                      color: product.stock > 10 ? '#059669' : product.stock > 0 ? '#d97706' : '#dc2626', 
+                      fontSize: 14, 
+                      fontWeight: 600,
+                      marginBottom: 4
+                    }}>
+                      Stock: {product.stock}
+                    </div>
+                    
+                    {/* Supplier */}
+                    {product.supplier && (
+                      <div style={{ color: '#888', fontSize: 12, marginBottom: 4 }}>
+                        Supplier: {product.supplier}
+                      </div>
+                    )}
+                    
+                    {/* Last Modified Info */}
+                    <div style={{ 
+                      color: '#9ca3af', 
+                      fontSize: 11, 
+                      marginTop: 'auto',
+                      paddingTop: 8,
+                      borderTop: '1px solid #f3f4f6',
+                      width: '100%'
+                    }}>
+                      <div>Modified: {new Date(product.lastModified).toLocaleDateString()}</div>
+                      {product.modifiedBy && (
+                        <div>By: {product.modifiedBy}</div>
+                      )}
+                    </div>
+                    
+                    {/* Add Button */}
                     <button
                       onClick={() => addToCart(product)}
-                      style={{ marginTop: 'auto', padding: '8px 12px', borderRadius: 8, background: '#3182ce', color: '#fff', border: 'none', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}
+                      disabled={product.stock === 0}
+                      style={{ 
+                        marginTop: 8, 
+                        padding: '8px 12px', 
+                        borderRadius: 8, 
+                        background: product.stock === 0 ? '#9ca3af' : '#3182ce', 
+                        color: '#fff', 
+                        border: 'none', 
+                        fontWeight: 600, 
+                        fontSize: 15, 
+                        cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
+                        width: '100%'
+                      }}
                     >
-                      Add
+                      {product.stock === 0 ? 'Out of Stock' : 'Add'}
                     </button>
                   </div>
                 ))}

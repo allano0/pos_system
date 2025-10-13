@@ -17,7 +17,7 @@ autoUpdater.logger = console
 
 // Set request headers to avoid some common issues
 autoUpdater.requestHeaders = {
-  'User-Agent': 'Supermax-POS-Updater'
+  'User-Agent': 'SAMTECH-POS-Updater'
 }
 
 // Update events
@@ -194,6 +194,8 @@ function createWindow(): void {
 
   // IPC handler for printing only the receipt content in a new window
   ipcMain.handle('print-receipt-content', async (_, html) => {
+    console.log('Print request received, HTML length:', html.length);
+    console.log('HTML preview:', html.substring(0, 200) + '...');
     return new Promise((resolve, reject) => {
       const printWindow = new BrowserWindow({
         width: 800,
@@ -204,7 +206,7 @@ function createWindow(): void {
         },
       });
       // Load the HTML as a data URL
-      printWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`
+      const htmlContent = `
         <html>
           <head>
             <style>
@@ -215,19 +217,27 @@ function createWindow(): void {
           </head>
           <body>${html}</body>
         </html>
-      `));
+      `;
+      printWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
       printWindow.webContents.on('did-finish-load', () => {
+        console.log('Print window loaded, starting print...');
         setTimeout(() => {
           printWindow.webContents.print({
             silent: true,
             printBackground: true,
             pageSize: 'A4',
           }, (success, errorType) => {
+            console.log('Print completed:', success, errorType);
             setTimeout(() => {
               printWindow.close();
             }, 3000); // Close after 3 seconds
-            if (!success) reject(errorType);
-            else resolve('printed');
+            if (!success) {
+              console.error('Print failed:', errorType);
+              reject(errorType);
+            } else {
+              console.log('Print successful');
+              resolve('printed');
+            }
           });
         }, 500); // Wait a bit for rendering
       });

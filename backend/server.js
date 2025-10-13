@@ -11,7 +11,7 @@ app.use(express.json());
 
 // Test endpoint to verify server is running
 app.get('/api/test', (req, res) => {
-  res.json({ message: 'Supermax POS Backend is running!', timestamp: new Date().toISOString() });
+  res.json({ message: 'SAMTECH POS Backend is running!', timestamp: new Date().toISOString() });
 });
 
 const PORT = process.env.PORT || 5000;
@@ -24,8 +24,13 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
 const productSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   name: String,
+  category: String,
+  description: String,
   price: Number,
+  stock: Number,
+  supplier: String,
   lastModified: Number,
+  modifiedBy: String,
 });
 const Product = mongoose.model('Product', productSchema);
 
@@ -67,6 +72,39 @@ async function ensureOwner() {
 }
 ensureOwner();
 
+// Migrate existing products in database to include new fields
+async function migrateProducts() {
+  try {
+    const products = await Product.find({});
+    let migratedCount = 0;
+    
+    for (const product of products) {
+      const needsMigration = !product.category || !product.description || product.stock === undefined;
+      
+      if (needsMigration) {
+        product.category = product.category || 'General';
+        product.description = product.description || 'No description available';
+        product.stock = product.stock || 0;
+        product.supplier = product.supplier || 'Unknown';
+        product.modifiedBy = product.modifiedBy || 'System';
+        await product.save();
+        migratedCount++;
+      }
+    }
+    
+    if (migratedCount > 0) {
+      console.log(`Migrated ${migratedCount} products with new fields`);
+    }
+  } catch (err) {
+    console.error('Error migrating products:', err);
+  }
+}
+
+// Run migration after MongoDB connection
+mongoose.connection.once('open', () => {
+  migrateProducts();
+});
+
 // Add Supplier schema/model if missing
 const supplierSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -93,8 +131,47 @@ const salesSchema = new mongoose.Schema({
   receiptNo: String,
   userName: String,
   lastModified: Number,
+  // M-Pesa specific fields
+  mpesaPaymentTime: String,
+  mpesaRefNumber: String,
 });
 const Sales = mongoose.model('Sales', salesSchema);
+
+// Add Invoice schema/model
+const invoiceSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  items: [{
+    id: String,
+    name: String,
+    price: Number,
+    quantity: Number
+  }],
+  total: Number,
+  date: String,
+  invoiceNo: String,
+  customerName: String,
+  userName: String,
+  lastModified: Number,
+});
+const Invoice = mongoose.model('Invoice', invoiceSchema);
+
+// Add Credit Note schema/model
+const creditNoteSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  originalSaleId: String,
+  items: [{
+    id: String,
+    name: String,
+    price: Number,
+    quantity: Number
+  }],
+  total: Number,
+  date: String,
+  creditNoteNo: String,
+  userName: String,
+  lastModified: Number,
+});
+const CreditNote = mongoose.model('CreditNote', creditNoteSchema);
 
 // Unified sync endpoint for products, branches, and cashiers
 app.post('/api/sync', async (req, res) => {
@@ -127,12 +204,30 @@ app.post('/api/sync', async (req, res) => {
         await Product.create(local);
       } else if (local.lastModified > dbProduct.lastModified) {
         dbProduct.name = local.name;
+        dbProduct.category = local.category;
+        dbProduct.description = local.description;
         dbProduct.price = local.price;
+        dbProduct.stock = local.stock;
+        dbProduct.supplier = local.supplier;
         dbProduct.lastModified = local.lastModified;
+        dbProduct.modifiedBy = local.modifiedBy;
         await dbProduct.save();
       }
     }
     const allProducts = await Product.find({});
+    
+    // Migrate existing products in database to include new fields
+    const migratedProducts = allProducts.map(product => ({
+      id: product.id,
+      name: product.name,
+      category: product.category || 'General',
+      description: product.description || 'No description available',
+      price: product.price,
+      stock: product.stock || 0,
+      supplier: product.supplier || 'Unknown',
+      lastModified: product.lastModified || Date.now(),
+      modifiedBy: product.modifiedBy || 'System'
+    }));
 
     // --- Branches sync ---
     const localBranches = req.body.branches || [];
@@ -197,12 +292,53 @@ app.post('/api/sync', async (req, res) => {
         dbSale.receiptNo = local.receiptNo;
         dbSale.userName = local.userName;
         dbSale.lastModified = local.lastModified;
+        // Update M-Pesa fields if they exist
+        if (local.mpesaPaymentTime) dbSale.mpesaPaymentTime = local.mpesaPaymentTime;
+        if (local.mpesaRefNumber) dbSale.mpesaRefNumber = local.mpesaRefNumber;
         await dbSale.save();
       }
     }
     const allSales = await Sales.find({});
 
-    res.json({ products: allProducts, branches: allBranches, cashiers: allCashiers, suppliers: allSuppliers, sales: allSales });
+    // --- Invoices sync ---
+    const localInvoices = req.body.invoices || [];
+    for (const local of localInvoices) {
+      const dbInvoice = await Invoice.findOne({ id: local.id });
+      if (!dbInvoice) {
+        await Invoice.create(local);
+      } else if (local.lastModified > dbInvoice.lastModified) {
+        dbInvoice.items = local.items;
+        dbInvoice.total = local.total;
+        dbInvoice.date = local.date;
+        dbInvoice.invoiceNo = local.invoiceNo;
+        dbInvoice.customerName = local.customerName;
+        dbInvoice.userName = local.userName;
+        dbInvoice.lastModified = local.lastModified;
+        await dbInvoice.save();
+      }
+    }
+    const allInvoices = await Invoice.find({});
+
+    // --- Credit Notes sync ---
+    const localCreditNotes = req.body.creditNotes || [];
+    for (const local of localCreditNotes) {
+      const dbCreditNote = await CreditNote.findOne({ id: local.id });
+      if (!dbCreditNote) {
+        await CreditNote.create(local);
+      } else if (local.lastModified > dbCreditNote.lastModified) {
+        dbCreditNote.originalSaleId = local.originalSaleId;
+        dbCreditNote.items = local.items;
+        dbCreditNote.total = local.total;
+        dbCreditNote.date = local.date;
+        dbCreditNote.creditNoteNo = local.creditNoteNo;
+        dbCreditNote.userName = local.userName;
+        dbCreditNote.lastModified = local.lastModified;
+        await dbCreditNote.save();
+      }
+    }
+    const allCreditNotes = await CreditNote.find({});
+
+    res.json({ products: migratedProducts, branches: allBranches, cashiers: allCashiers, suppliers: allSuppliers, sales: allSales, invoices: allInvoices, creditNotes: allCreditNotes });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Sync failed' });
@@ -247,7 +383,21 @@ app.get('/api/branches', async (req, res) => {
 app.get('/api/products', async (req, res) => {
   try {
     const products = await Product.find({});
-    res.json(products);
+    
+    // Migrate existing products to include new fields
+    const migratedProducts = products.map(product => ({
+      id: product.id,
+      name: product.name,
+      category: product.category || 'General',
+      description: product.description || 'No description available',
+      price: product.price,
+      stock: product.stock || 0,
+      supplier: product.supplier || 'Unknown',
+      lastModified: product.lastModified || Date.now(),
+      modifiedBy: product.modifiedBy || 'System'
+    }));
+    
+    res.json(migratedProducts);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch products' });
   }
@@ -342,7 +492,21 @@ app.post('/api/products/search', async (req, res) => {
       query.supplier = supplier;
     }
     const results = await Product.find(query);
-    res.json({ products: results });
+    
+    // Migrate existing products to include new fields
+    const migratedResults = results.map(product => ({
+      id: product.id,
+      name: product.name,
+      category: product.category || 'General',
+      description: product.description || 'No description available',
+      price: product.price,
+      stock: product.stock || 0,
+      supplier: product.supplier || 'Unknown',
+      lastModified: product.lastModified || Date.now(),
+      modifiedBy: product.modifiedBy || 'System'
+    }));
+    
+    res.json({ products: migratedResults });
   } catch (err) {
     res.status(500).json({ error: 'Failed to search products' });
   }

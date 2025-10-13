@@ -1,7 +1,7 @@
 {
-  "name": "supermax",
+  "name": "SAMTECH",
   "version": "1.0.4",
-  "description": "Supermax POS System - An Electron application with React and TypeScript",
+  "description": "SAMTECH POS System - An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
@@ -16,7 +16,7 @@
     "start:backend": "npm --prefix ./backend run dev",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && npm run build:backend && electron-vite build",
-    "build:backend": "npm --prefix ./backend install && xcopy backend out\\backend /E /I /Y",
+    "build:backend": "xcopy backend out\\backend /E /I /Y",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",

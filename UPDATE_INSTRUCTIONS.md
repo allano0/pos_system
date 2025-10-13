@@ -167,14 +167,14 @@ For more information, see the [electron-updater documentation](https://www.elect
 # Update Configuration Instructions
 
 ## Overview
-This document explains how to configure and troubleshoot the auto-update system for the Supermax POS application.
+This document explains how to configure and troubleshoot the auto-update system for the SAMTECH POS application.
 
 ## GitHub Token Setup
 
 ### 1. Create a GitHub Personal Access Token
 1. Go to GitHub Settings > Developer settings > Personal access tokens
 2. Click "Generate new token (classic)"
-3. Give it a name like "Supermax POS Updates"
+3. Give it a name like "SAMTECH POS Updates"
 4. Select the following scopes:
    - `repo` (Full control of private repositories)
    - `write:packages` (Upload packages to GitHub Package Registry)
