@@ -18,7 +18,7 @@ const ChangePassword: React.FC<ChangePasswordProps> = ({ onPasswordChanged }) =>
 
   // Use the same URL pattern as DataSync
   const isDev = process.env.NODE_ENV === 'development'
-  const baseUrl = isDev ? 'http://localhost:5000' : 'https://SAMTECH-backend.onrender.com'
+  const baseUrl = isDev ? 'http://localhost:5000' : 'https://supermax-backend.onrender.com'
   const CHANGE_PASSWORD_URL = `${baseUrl}/api/change-password`
 
   const validatePassword = (password: string) => {

@@ -191,7 +191,7 @@ export default function Products() {
     try {
       // Determine backend URL based on environment
       const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-      const baseUrl = isDev ? 'http://localhost:5000' : 'https://SAMTECH-backend.onrender.com';
+      const baseUrl = isDev ? 'http://localhost:5000' : 'https://supermax-backend.onrender.com';
       
       // Fetch fresh data from server
       const [productsRes, suppliersRes] = await Promise.all([

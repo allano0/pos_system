@@ -1,6 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import Versions from './components/Versions'
-import electronLogo from './assets/electron.svg'
+import electronLogo from './assets/logo.svg'
 import SignIn from './pages/SignIn'
 import OwnerDashboard from './pages/OwnerDashboard'
 import Layout from './components/Layout'

@@ -64,7 +64,7 @@ export default function SignIn() {
     try {
       // Determine backend URL based on environment
       const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-      const baseUrl = isDev ? 'http://localhost:5000' : 'https://SAMTECH-backend.onrender.com'; // Use Render URL for production
+      const baseUrl = isDev ? 'http://localhost:5000' : 'https://supermax-backend.onrender.com'; // Use Render URL for production
       console.log('Environment:', isDev ? 'Development' : 'Production');
       console.log('Attempting to connect to backend at:', baseUrl);
       

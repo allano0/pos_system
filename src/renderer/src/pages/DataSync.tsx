@@ -10,7 +10,7 @@ const INVOICE_STORAGE_KEY = 'pos_invoices';
 const CREDIT_NOTE_STORAGE_KEY = 'pos_credit_notes';
 // Determine backend URL based on environment
 const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-const baseUrl = isDev ? 'http://localhost:5000' : 'https://SAMTECH-backend.onrender.com';
+const baseUrl = isDev ? 'http://localhost:5000' : 'https://supermax-backend.onrender.com';
 const SYNC_URL = `${baseUrl}/api/sync`;
 const OWNER_URL = `${baseUrl}/api/owner`;
 const DELETED_PRODUCT_KEY = 'pos_deleted_products';
