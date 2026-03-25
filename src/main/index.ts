@@ -17,7 +17,7 @@ autoUpdater.logger = console
 
 // Set request headers to avoid some common issues
 autoUpdater.requestHeaders = {
-  'User-Agent': 'SAMTECH-POS-Updater'
+  'User-Agent': 'IllusionDrips-Updater'
 }
 
 // Update events

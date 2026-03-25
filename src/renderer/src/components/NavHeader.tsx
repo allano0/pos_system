@@ -63,7 +63,7 @@ export default function NavHeader({ role = 'default' }: { role?: 'default' | 'ca
     <aside className="nav-sidebar">
       <div className="nav-sidebar-header">
         <img src={wavyLines} alt="bg" className="nav-sidebar-wavy" />
-        <div className="nav-sidebar-title"> SAMTECH POS System <span className="nav-sidebar-emoji">💸</span></div>
+        <div className="nav-sidebar-title"> Illusion Drips <span className="nav-sidebar-emoji">💧</span></div>
         <div className="nav-sidebar-subtitle">Fast. Reliable. Modern.</div>
         <div className="nav-sidebar-avatar" title={userName}>
           <span>{userInitials}</span>

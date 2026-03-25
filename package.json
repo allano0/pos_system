@@ -1,7 +1,7 @@
 {
-  "name": "SAMTECH",
+  "name": "illusion-drips",
   "version": "1.0.6",
-  "description": "SAMTECH POS System - An Electron application with React and TypeScript",
+  "description": "Illusion Drips POS System - An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",

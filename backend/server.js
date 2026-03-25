@@ -11,7 +11,7 @@ app.use(express.json());
 
 // Test endpoint to verify server is running
 app.get('/api/test', (req, res) => {
-  res.json({ message: 'SAMTECH POS Backend is running!', timestamp: new Date().toISOString() });
+  res.json({ message: 'Illusion Drips POS Backend is running!', timestamp: new Date().toISOString() });
 });
 
 const PORT = process.env.PORT || 5000;

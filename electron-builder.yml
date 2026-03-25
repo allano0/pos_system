@@ -1,5 +1,5 @@
-appId: com.SAMTECH.pos
-productName: SAMTECH
+appId: com.illusiondrips.pos
+productName: Illusion Drips
 directories:
   output: dist
   buildResources: build
@@ -19,7 +19,7 @@ asarUnpack:
   - resources/**
   - out/backend/**
 win:
-  executableName: SAMTECH
+  executableName: IllusionDrips
   icon: resources/icon.png
   sign: false
   signAndEditExecutable: false
@@ -28,7 +28,7 @@ win:
       arch:
         - x64
 nsis:
-  artifactName: SAMTECH-${version}-setup.${ext}
+  artifactName: IllusionDrips-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always

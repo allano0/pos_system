@@ -4,9 +4,9 @@ import './SignIn.css';
 import hero from '../assets/hero.png';
 
 const keypadNumbers = [1,2,3,4,5,6,7,8,9,0];
-const CASHIER_STORAGE_KEY = 'SAMTECH_cashiers';
-const BRANCH_STORAGE_KEY = 'SAMTECH_branches';
-const OWNER_STORAGE_KEY = 'SAMTECH_owner';
+const CASHIER_STORAGE_KEY = 'ILLUSION_DRIPS_cashiers';
+const BRANCH_STORAGE_KEY = 'ILLUSION_DRIPS_branches';
+const OWNER_STORAGE_KEY = 'ILLUSION_DRIPS_owner';
 
 function getCashiers() {
   try {
@@ -207,7 +207,7 @@ export default function SignIn() {
         </div>
         {/* Right: Sign In Form */}
         <div className="signin-form-section">
-          <h1 className="signin-title">SAMTECH POS</h1>
+          <h1 className="signin-title">ILLUSION DRIPS</h1>
           {/* Role Selection */}
           <div className="signin-role-select">
             {['cashier', 'owner'].map((r) => (
@@ -294,7 +294,7 @@ export default function SignIn() {
         <div className="sync-modal-overlay">
           <div className="sync-modal">
             <div className="sync-modal-header">
-              <h2>Welcome to SAMTECH POS</h2>
+              <h2>Welcome to Illusion Drips</h2>
               <p>First-time setup required</p>
             </div>
             <div className="sync-modal-content">
