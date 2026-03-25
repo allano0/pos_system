@@ -244,6 +244,72 @@ function createWindow(): void {
     });
   });
 
+  // IPC handler for thermal/roll printer (58mm or 80mm roll)
+  ipcMain.handle('print-thermal-receipt', async (_, html: string, paperWidth: number = 80) => {
+    console.log('Thermal print request received, paperWidth:', paperWidth, 'mm');
+    // Convert mm to microns (1mm = 1000 microns)
+    const widthMicrons = paperWidth * 1000;
+    // Use a very tall height – roll paper has no fixed length
+    const heightMicrons = 999999;
+    return new Promise((resolve, reject) => {
+      const printWindow = new BrowserWindow({
+        width: Math.round(paperWidth * 2.83), // rough px approximation for display
+        height: 800,
+        show: false,
+        webPreferences: {
+          sandbox: false,
+        },
+      });
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                width: ${paperWidth}mm;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 11px;
+                color: #000;
+                background: #fff;
+              }
+              @media print {
+                @page {
+                  size: ${paperWidth}mm auto;
+                  margin: 2mm;
+                }
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>${html}</body>
+        </html>
+      `;
+      printWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
+      printWindow.webContents.on('did-finish-load', () => {
+        console.log('Thermal print window loaded, starting print...');
+        setTimeout(() => {
+          printWindow.webContents.print({
+            silent: true,
+            printBackground: false,
+            margins: { marginType: 'none' },
+            pageSize: { width: widthMicrons, height: heightMicrons },
+          } as any, (success, errorType) => {
+            console.log('Thermal print completed:', success, errorType);
+            setTimeout(() => printWindow.close(), 3000);
+            if (!success) {
+              console.error('Thermal print failed:', errorType);
+              reject(errorType);
+            } else {
+              console.log('Thermal print successful');
+              resolve('printed');
+            }
+          });
+        }, 600);
+      });
+    });
+  });
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

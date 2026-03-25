@@ -6,6 +6,7 @@ const api = {
   printReceipt: () => ipcRenderer.invoke('print-receipt'),
   listPrinters: () => ipcRenderer.invoke('list-printers'),
   printReceiptContent: (html: string) => ipcRenderer.invoke('print-receipt-content', html),
+  printThermalReceipt: (html: string, paperWidth?: number) => ipcRenderer.invoke('print-thermal-receipt', html, paperWidth ?? 80),
   // Update APIs
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   downloadUpdate: () => ipcRenderer.invoke('download-update'),

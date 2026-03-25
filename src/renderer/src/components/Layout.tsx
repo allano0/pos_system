@@ -10,7 +10,7 @@ export default function Layout({ children, role = 'default' }: { children: React
       </div>
       <div className="layout-main">
         <div className="layout-content">{children}</div>
-        <footer className="layout-footer">powered by <a href="https://www.forou.tech" target="_blank" rel="noopener noreferrer">www.forou.tech</a></footer>
+        <footer className="layout-footer">powered by <a href="https://www.forouverse.solutions" target="_blank" rel="noopener noreferrer">www.forou.tech</a></footer>
       </div>
     </div>
   );

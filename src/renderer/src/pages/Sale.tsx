@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import hero from '../assets/hero.png';
 
 interface Product {
   id: string;
@@ -58,8 +57,8 @@ export default function Sale() {
   const [mpesaRefNumber, setMpesaRefNumber] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
-  const [logoBase64, setLogoBase64] = useState<string>('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [printerType, setPrinterType] = useState<'a4' | '80mm' | '58mm'>('a4');
   const receiptRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 8;
   const [search, setSearch] = useState('');
@@ -75,28 +74,8 @@ export default function Sale() {
   const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE) || 1;
   const paginatedProducts = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Convert logo to base64 for printing
-  const convertImageToBase64 = (imageSrc: string): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-        const base64 = canvas.toDataURL('image/png');
-        resolve(base64);
-      };
-      img.onerror = () => resolve(''); // Fallback to empty string if error
-      img.src = imageSrc;
-    });
-  };
-
   useEffect(() => {
     setProducts(loadProducts());
-    // Convert logo to base64 when component mounts
-    convertImageToBase64(hero).then(setLogoBase64);
   }, []);
 
   useEffect(() => {
@@ -181,21 +160,72 @@ export default function Sale() {
   };
 
   const handlePrint = () => {
+    if (printerType !== 'a4') {
+      handleThermalPrint();
+      return;
+    }
     if (window.api && typeof window.api.printReceiptContent === 'function') {
       if (receiptRef.current) {
-        console.log('Sale receipt HTML content:', receiptRef.current.innerHTML);
-        console.log('Logo base64 length:', logoBase64.length);
         window.api.printReceiptContent(receiptRef.current.innerHTML);
-        // Show success toast and close modal
         setShowSuccess(true);
         setShowReceipt(false);
-        // Auto-hide toast after 3 seconds
         setTimeout(() => setShowSuccess(false), 3000);
       } else {
         alert('Receipt content not found.');
       }
     } else {
       alert('Direct print is not available.');
+    }
+  };
+
+  const handleThermalPrint = () => {
+    if (!receiptData) return;
+    const paperWidth = printerType === '58mm' ? 58 : 80;
+    const lineWidth = printerType === '58mm' ? 32 : 48;
+    const divider = '-'.repeat(lineWidth);
+
+    const itemsHtml = receiptData.items.map((item: CartItem) => {
+      const name = item.name.length > lineWidth - 14 ? item.name.substring(0, lineWidth - 14) : item.name;
+      const subtotal = `Ksh ${(item.price * item.quantity).toFixed(2)}`;
+      const qty = `x${item.quantity}`;
+      const leftWidth = lineWidth - subtotal.length - qty.length - 2;
+      const safeName = name.substring(0, Math.max(0, leftWidth));
+      return `<div>${safeName.padEnd(leftWidth)} ${qty} ${subtotal}</div>`;
+    }).join('');
+
+    const mpesaSection = receiptData.paymentMethod === 'mpesa' && receiptData.mpesaPaymentTime
+      ? `<div>M-Pesa Time: ${receiptData.mpesaPaymentTime}</div><div>M-Pesa Ref:  ${receiptData.mpesaRefNumber}</div>`
+      : '';
+
+    const html = `
+      <div style="font-family:'Courier New',Courier,monospace;font-size:12px;width:${paperWidth}mm;padding:2mm;">
+        <div style="text-align:center;font-weight:bold;font-size:14px;margin-bottom:4px;">ILLUSION DRIPS</div>
+        <div style="text-align:center;font-size:10px;">Tel: 0712 345 678</div>
+        <div style="text-align:center;font-size:10px;margin-bottom:4px;">info@illusiondrips.co.ke</div>
+        <div>${divider}</div>
+        <div>Date:   ${receiptData.date}</div>
+        <div>Rcpt#:  ${receiptData.receiptNo}</div>
+        <div>By:     ${userName}</div>
+        <div>${divider}</div>
+        ${itemsHtml}
+        <div>${divider}</div>
+        <div style="font-weight:bold;">TOTAL: Ksh ${receiptData.total.toFixed(2)}</div>
+        <div>Payment: ${receiptData.paymentMethod.toUpperCase()}</div>
+        ${mpesaSection}
+        <div>${divider}</div>
+        <div style="text-align:center;font-size:10px;">Goods once sold cannot be returned</div>
+        <div style="text-align:center;font-size:10px;">Thank you for shopping with us!</div>
+        <br/><br/>
+      </div>
+    `;
+
+    if (window.api && typeof (window.api as any).printThermalReceipt === 'function') {
+      (window.api as any).printThermalReceipt(html, paperWidth);
+      setShowSuccess(true);
+      setShowReceipt(false);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } else {
+      alert('Thermal print is not available.');
     }
   };
 
@@ -764,7 +794,36 @@ export default function Sale() {
                 ⚠️ Goods once sold cannot be returned
               </div>
             </div>
-            <button onClick={handlePrint} style={{ padding: '12px 0', borderRadius: 8, background: '#3182ce', color: '#fff', border: 'none', fontWeight: 600, fontSize: 17, width: '100%', marginTop: 16 }}>Print Receipt</button>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 16, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 4, flex: 1, minWidth: 220 }}>
+                {(['a4', '80mm', '58mm'] as const).map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setPrinterType(type)}
+                    style={{
+                      flex: 1,
+                      padding: '8px 4px',
+                      borderRadius: 6,
+                      border: '2px solid ' + (printerType === type ? '#3182ce' : '#d1d5db'),
+                      background: printerType === type ? '#eff6ff' : '#fff',
+                      color: printerType === type ? '#1e40af' : '#374151',
+                      fontWeight: printerType === type ? 700 : 400,
+                      fontSize: 12,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {type === 'a4' ? '🖨 A4' : `🧾 ${type}`}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={handlePrint}
+                style={{ padding: '10px 0', borderRadius: 8, background: '#3182ce', color: '#fff', border: 'none', fontWeight: 600, fontSize: 15, flex: 2, minWidth: 140 }}
+              >
+                {printerType === 'a4' ? 'Print A4 Receipt' : `Print ${printerType} Roll`}
+              </button>
+            </div>
           </div>
         </div>
       )}
