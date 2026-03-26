@@ -1,6 +1,6 @@
 {
   "name": "illusion-drips",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Illusion Drips POS System - An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -16,7 +16,7 @@
     "start:backend": "npm --prefix ./backend run dev",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && npm run build:backend && electron-vite build",
-    "build:backend": "xcopy backend out\\backend /E /I /Y",
+    "build:backend": "cp -r backend out/backend",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
