@@ -593,16 +593,6 @@ export default function Sale() {
                   textAlign: 'center', 
                   marginBottom: 8, 
                   color: '#666', 
-                  fontSize: 12,
-                  borderBottom: '2px solid #3182ce',
-                  paddingBottom: 8
-                }}>
-                  Opposite Family Bank, Thika, Kenya
-                </div>
-                <div style={{ 
-                  textAlign: 'center', 
-                  marginBottom: 8, 
-                  color: '#666', 
                   fontSize: 11
                 }}>
                   Tel: 0712 345 678 | Email: info@illusiondrips.co.ke
