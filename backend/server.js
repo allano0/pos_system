@@ -27,6 +27,7 @@ const productSchema = new mongoose.Schema({
   category: String,
   description: String,
   price: Number,
+  buyingPrice: Number,
   stock: Number,
   supplier: String,
   lastModified: Number,
@@ -79,12 +80,13 @@ async function migrateProducts() {
     let migratedCount = 0;
     
     for (const product of products) {
-      const needsMigration = !product.category || !product.description || product.stock === undefined;
+      const needsMigration = !product.category || !product.description || product.stock === undefined || product.buyingPrice === undefined;
       
       if (needsMigration) {
         product.category = product.category || 'General';
         product.description = product.description || 'No description available';
         product.stock = product.stock || 0;
+        product.buyingPrice = product.buyingPrice || 0;
         product.supplier = product.supplier || 'Unknown';
         product.modifiedBy = product.modifiedBy || 'System';
         await product.save();
@@ -207,6 +209,7 @@ app.post('/api/sync', async (req, res) => {
         dbProduct.category = local.category;
         dbProduct.description = local.description;
         dbProduct.price = local.price;
+        dbProduct.buyingPrice = local.buyingPrice || 0;
         dbProduct.stock = local.stock;
         dbProduct.supplier = local.supplier;
         dbProduct.lastModified = local.lastModified;
@@ -223,6 +226,7 @@ app.post('/api/sync', async (req, res) => {
       category: product.category || 'General',
       description: product.description || 'No description available',
       price: product.price,
+      buyingPrice: product.buyingPrice || 0,
       stock: product.stock || 0,
       supplier: product.supplier || 'Unknown',
       lastModified: product.lastModified || Date.now(),
@@ -391,6 +395,7 @@ app.get('/api/products', async (req, res) => {
       category: product.category || 'General',
       description: product.description || 'No description available',
       price: product.price,
+      buyingPrice: product.buyingPrice || 0,
       stock: product.stock || 0,
       supplier: product.supplier || 'Unknown',
       lastModified: product.lastModified || Date.now(),
@@ -479,11 +484,11 @@ app.post('/api/branches/search', async (req, res) => {
 
 // POST /api/products/search endpoint
 app.post('/api/products/search', async (req, res) => {
-  try {
+  try { 
     const { name, category, supplier } = req.body;
     const query = {};
     if (name) {
-      query.name = { $regex: name, $options: 'i' };
+      query.name = { $regex: name, $options: 'i' }; 
     }
     if (category) {
       query.category = category;
@@ -500,6 +505,7 @@ app.post('/api/products/search', async (req, res) => {
       category: product.category || 'General',
       description: product.description || 'No description available',
       price: product.price,
+      buyingPrice: product.buyingPrice || 0,
       stock: product.stock || 0,
       supplier: product.supplier || 'Unknown',
       lastModified: product.lastModified || Date.now(),

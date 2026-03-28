@@ -6,6 +6,7 @@ interface Product {
   category: string;
   description: string;
   price: number;
+  buyingPrice: number;
   stock: number;
   supplier: string;
   lastModified: number;
@@ -61,6 +62,7 @@ const emptyProduct: Omit<Product, 'id' | 'lastModified'> = {
   category: '',
   description: '',
   price: 0,
+  buyingPrice: 0,
   stock: 0,
   supplier: '',
 };
@@ -130,6 +132,7 @@ export default function Products() {
       category: product.category,
       description: product.description,
       price: product.price,
+      buyingPrice: product.buyingPrice || 0,
       stock: product.stock,
       supplier: product.supplier,
     });
@@ -146,12 +149,12 @@ export default function Products() {
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: name === 'price' || name === 'stock' ? Number(value) : value }));
+    setForm(f => ({ ...f, [name]: name === 'price' || name === 'buyingPrice' || name === 'stock' ? Number(value) : value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.category.trim() || !form.supplier.trim() || isNaN(form.price) || isNaN(form.stock)) {
+    if (!form.name.trim() || !form.category.trim() || !form.supplier.trim() || isNaN(form.price) || isNaN(form.buyingPrice) || isNaN(form.stock)) {
       setError('Please fill all required fields.');
       return;
     }
@@ -413,7 +416,8 @@ export default function Products() {
                   <th style={{ padding: 10, textAlign: 'left' }}>Name</th>
                   <th style={{ padding: 10, textAlign: 'left' }}>Category</th>
                   <th style={{ padding: 10, textAlign: 'left' }}>Description</th>
-                  <th style={{ padding: 10, textAlign: 'right' }}>Price</th>
+                  <th style={{ padding: 10, textAlign: 'right' }}>Buying Price</th>
+                  <th style={{ padding: 10, textAlign: 'right' }}>Selling Price</th>
                   <th style={{ padding: 10, textAlign: 'right' }}>Stock</th>
                   <th style={{ padding: 10, textAlign: 'left' }}>Supplier</th>
                 </tr>
@@ -426,6 +430,7 @@ export default function Products() {
                     <td style={{ padding: 10 }}>{product.name}</td>
                     <td style={{ padding: 10 }}>{product.category}</td>
                     <td style={{ padding: 10, maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.description}</td>
+                    <td style={{ padding: 10, textAlign: 'right' }}>{product.buyingPrice || 0}</td>
                     <td style={{ padding: 10, textAlign: 'right' }}>{product.price}</td>
                     <td style={{ padding: 10, textAlign: 'right' }}>{product.stock}</td>
                     <td style={{ padding: 10 }}>{product.supplier}</td>
@@ -452,7 +457,8 @@ export default function Products() {
               <th style={{ padding: 10, textAlign: 'left' }}>Name</th>
               <th style={{ padding: 10, textAlign: 'left' }}>Category</th>
               <th style={{ padding: 10, textAlign: 'left' }}>Description</th>
-              <th style={{ padding: 10, textAlign: 'right' }}>Price</th>
+              <th style={{ padding: 10, textAlign: 'right' }}>Buying</th>
+              <th style={{ padding: 10, textAlign: 'right' }}>Selling</th>
               <th style={{ padding: 10, textAlign: 'right' }}>Stock</th>
               <th style={{ padding: 10, textAlign: 'left' }}>Supplier</th>
               <th style={{ padding: 10, textAlign: 'center' }}>Actions</th>
@@ -466,7 +472,8 @@ export default function Products() {
                 <td style={{ padding: 10 }}>{product.name}</td>
                 <td style={{ padding: 10 }}>{product.category}</td>
                 <td style={{ padding: 10, maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.description}</td>
-                <td style={{ padding: 10, textAlign: 'right' }}>${product.price.toFixed(2)}</td>
+                <td style={{ padding: 10, textAlign: 'right' }}>Ksh {product.buyingPrice ? product.buyingPrice.toFixed(2) : '0.00'}</td>
+                <td style={{ padding: 10, textAlign: 'right' }}>Ksh {product.price.toFixed(2)}</td>
                 <td style={{ padding: 10, textAlign: 'right' }}>{product.stock}</td>
                 <td style={{ padding: 10 }}>{product.supplier}</td>
                 <td style={{ padding: 10, textAlign: 'center' }}>
@@ -517,14 +524,18 @@ export default function Products() {
                 </label>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <label style={{ fontWeight: 600, color: '#223', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    Price
-                    <input name="price" type="number" placeholder="Price" value={form.price} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} step={0.01} />
+                    Buying Price
+                    <input name="buyingPrice" type="number" placeholder="Buying Price" value={form.buyingPrice} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} step={0.01} />
                   </label>
                   <label style={{ fontWeight: 600, color: '#223', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    Stock
-                    <input name="stock" type="number" placeholder="Stock" value={form.stock} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} />
+                    Selling Price
+                    <input name="price" type="number" placeholder="Selling Price" value={form.price} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} step={0.01} />
                   </label>
                 </div>
+                <label style={{ fontWeight: 600, color: '#223', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  Stock
+                  <input name="stock" type="number" placeholder="Stock" value={form.stock} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} />
+                </label>
                 <label style={{ fontWeight: 600, color: '#223', display: 'flex', flexDirection: 'column', gap: 4 }}>
                   Supplier
                   <select name="supplier" value={form.supplier} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required>

@@ -587,7 +587,7 @@ export default function Sale() {
                   fontWeight: 700,
                   color: '#3182ce'
                 }}>
-                  ILLUSION DRIPS
+                  GOLDEN MARK APPARTMENTS
                 </h2>
                 <div style={{ 
                   textAlign: 'center', 
@@ -595,7 +595,7 @@ export default function Sale() {
                   color: '#666', 
                   fontSize: 11
                 }}>
-                  Tel: 0712 345 678 | Email: info@illusiondrips.co.ke
+                  Tel: 0712 345 678 | Email: infO@goldenmarkappartments.co.ke
                 </div>
                 <div style={{ 
                   textAlign: 'center', 

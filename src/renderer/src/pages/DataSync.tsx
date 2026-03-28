@@ -182,7 +182,7 @@ export default function DataSync() {
               <tr style={{ background: '#f5f5f5' }}>
                 <th style={{ padding: 8, border: '1px solid #ddd' }}>ID</th>
                 <th style={{ padding: 8, border: '1px solid #ddd' }}>Name</th>
-                <th style={{ padding: 8, border: '1px solid #ddd' }}>Price</th>
+                <th style={{ padding: 8, border: '1px solid #ddd' }}>Price (Ksh)</th>
                 <th style={{ padding: 8, border: '1px solid #ddd' }}>Last Modified</th>
               </tr>
             </thead>

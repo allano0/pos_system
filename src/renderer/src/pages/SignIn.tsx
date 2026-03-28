@@ -4,27 +4,57 @@ import './SignIn.css';
 import hero from '../assets/hero.png';
 
 const keypadNumbers = [1,2,3,4,5,6,7,8,9,0];
-const CASHIER_STORAGE_KEY = 'ILLUSION_DRIPS_cashiers';
-const BRANCH_STORAGE_KEY = 'ILLUSION_DRIPS_branches';
-const OWNER_STORAGE_KEY = 'ILLUSION_DRIPS_owner';
+const CASHIER_STORAGE_KEY = 'pos_cashiers';
+const BRANCH_STORAGE_KEY = 'pos_branches';
+const OWNER_STORAGE_KEY = 'pos_owner';
 
 function getCashiers() {
   try {
-    return JSON.parse(localStorage.getItem(CASHIER_STORAGE_KEY) || '[]');
+    const data = localStorage.getItem(CASHIER_STORAGE_KEY);
+    if (!data) {
+      // Try legacy key for migration
+      const legacyData = localStorage.getItem('ILLUSION_DRIPS_cashiers');
+      if (legacyData) {
+        localStorage.setItem(CASHIER_STORAGE_KEY, legacyData);
+        return JSON.parse(legacyData);
+      }
+      return [];
+    }
+    return JSON.parse(data);
   } catch {
     return [];
   }
 }
 function getBranches() {
   try {
-    return JSON.parse(localStorage.getItem(BRANCH_STORAGE_KEY) || '[]');
+    const data = localStorage.getItem(BRANCH_STORAGE_KEY);
+    if (!data) {
+      // Try legacy key for migration
+      const legacyData = localStorage.getItem('ILLUSION_DRIPS_branches');
+      if (legacyData) {
+        localStorage.setItem(BRANCH_STORAGE_KEY, legacyData);
+        return JSON.parse(legacyData);
+      }
+      return [];
+    }
+    return JSON.parse(data);
   } catch {
     return [];
   }
 }
 function getOwner() {
   try {
-    return JSON.parse(localStorage.getItem(OWNER_STORAGE_KEY) || 'null');
+    const data = localStorage.getItem(OWNER_STORAGE_KEY);
+    if (!data) {
+      // Try legacy key for migration
+      const legacyData = localStorage.getItem('ILLUSION_DRIPS_owner');
+      if (legacyData) {
+        localStorage.setItem(OWNER_STORAGE_KEY, legacyData);
+        return JSON.parse(legacyData);
+      }
+      return null;
+    }
+    return JSON.parse(data);
   } catch {
     return null;
   }

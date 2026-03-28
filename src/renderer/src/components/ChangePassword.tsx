@@ -102,20 +102,20 @@ const ChangePassword: React.FC<ChangePasswordProps> = ({ onPasswordChanged }) =>
       // Update local storage with new PIN
       if (currentRole === 'owner') {
         // Update owner PIN in localStorage
-        const ownerData = JSON.parse(localStorage.getItem('ILLUSION_DRIPS_owner') || '{}')
+        const ownerData = JSON.parse(localStorage.getItem('pos_owner') || '{}')
         ownerData.pin = newPassword
         ownerData.lastModified = Date.now()
-        localStorage.setItem('ILLUSION_DRIPS_owner', JSON.stringify(ownerData))
+        localStorage.setItem('pos_owner', JSON.stringify(ownerData))
       } else if (currentRole === 'cashier') {
         // Update cashier PIN in localStorage
-        const cashiers = JSON.parse(localStorage.getItem('ILLUSION_DRIPS_cashiers') || '[]')
+        const cashiers = JSON.parse(localStorage.getItem('pos_cashiers') || '[]')
         const updatedCashiers = cashiers.map((cashier: any) => {
           if (cashier.name === currentUser) {
             return { ...cashier, pin: newPassword, lastModified: Date.now() }
           }
           return cashier
         })
-        localStorage.setItem('ILLUSION_DRIPS_cashiers', JSON.stringify(updatedCashiers))
+        localStorage.setItem('pos_cashiers', JSON.stringify(updatedCashiers))
       }
       
       setMessage({ type: 'success', text: 'PIN changed successfully!' })
