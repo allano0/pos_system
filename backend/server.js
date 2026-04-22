@@ -29,6 +29,8 @@ const productSchema = new mongoose.Schema({
   price: Number,
   buyingPrice: Number,
   stock: Number,
+  unitsPerPack: { type: Number, default: 1 },
+  unitPrice: Number,
   supplier: String,
   lastModified: Number,
   modifiedBy: String,
@@ -61,17 +63,7 @@ const ownerSchema = new mongoose.Schema({
 });
 const Owner = mongoose.model('Owner', ownerSchema);
 
-// Insert owner if not present
-async function ensureOwner() {
-  const existing = await Owner.findOne({ role: 'owner' });
-  if (!existing) {
-    await Owner.create({ id: 'owner-1', name: 'John Doe', pin: '5222', role: 'owner' });
-    console.log('Owner user created: John Doe (PIN: 5222)');
-  } else {
-    console.log('Owner user already exists.');
-  }
-}
-ensureOwner();
+
 
 // Migrate existing products in database to include new fields
 async function migrateProducts() {
@@ -104,6 +96,7 @@ async function migrateProducts() {
 
 // Run migration after MongoDB connection
 mongoose.connection.once('open', () => {
+  ensureOwner();
   migrateProducts();
 });
 
@@ -211,6 +204,8 @@ app.post('/api/sync', async (req, res) => {
         dbProduct.price = local.price;
         dbProduct.buyingPrice = local.buyingPrice || 0;
         dbProduct.stock = local.stock;
+        dbProduct.unitsPerPack = local.unitsPerPack || 1;
+        dbProduct.unitPrice = local.unitPrice || (local.price / (local.unitsPerPack || 1));
         dbProduct.supplier = local.supplier;
         dbProduct.lastModified = local.lastModified;
         dbProduct.modifiedBy = local.modifiedBy;
@@ -228,6 +223,8 @@ app.post('/api/sync', async (req, res) => {
       price: product.price,
       buyingPrice: product.buyingPrice || 0,
       stock: product.stock || 0,
+      unitsPerPack: product.unitsPerPack || 1,
+      unitPrice: product.unitPrice || (product.price / (product.unitsPerPack || 1)),
       supplier: product.supplier || 'Unknown',
       lastModified: product.lastModified || Date.now(),
       modifiedBy: product.modifiedBy || 'System'
@@ -397,6 +394,8 @@ app.get('/api/products', async (req, res) => {
       price: product.price,
       buyingPrice: product.buyingPrice || 0,
       stock: product.stock || 0,
+      unitsPerPack: product.unitsPerPack || 1,
+      unitPrice: product.unitPrice || (product.price / (product.unitsPerPack || 1)),
       supplier: product.supplier || 'Unknown',
       lastModified: product.lastModified || Date.now(),
       modifiedBy: product.modifiedBy || 'System'
@@ -507,6 +506,8 @@ app.post('/api/products/search', async (req, res) => {
       price: product.price,
       buyingPrice: product.buyingPrice || 0,
       stock: product.stock || 0,
+      unitsPerPack: product.unitsPerPack || 1,
+      unitPrice: product.unitPrice || (product.price / (product.unitsPerPack || 1)),
       supplier: product.supplier || 'Unknown',
       lastModified: product.lastModified || Date.now(),
       modifiedBy: product.modifiedBy || 'System'

@@ -8,6 +8,8 @@ interface Product {
   price: number;
   buyingPrice: number;
   stock: number;
+  unitsPerPack?: number;
+  unitPrice?: number;
   supplier: string;
   lastModified: number;
 }
@@ -64,6 +66,8 @@ const emptyProduct: Omit<Product, 'id' | 'lastModified'> = {
   price: 0,
   buyingPrice: 0,
   stock: 0,
+  unitsPerPack: 1,
+  unitPrice: 0,
   supplier: '',
 };
 
@@ -134,6 +138,8 @@ export default function Products() {
       price: product.price,
       buyingPrice: product.buyingPrice || 0,
       stock: product.stock,
+      unitsPerPack: product.unitsPerPack || 1,
+      unitPrice: product.unitPrice || (product.price / (product.unitsPerPack || 1)),
       supplier: product.supplier,
     });
     setModalMode('edit');
@@ -149,7 +155,10 @@ export default function Products() {
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: name === 'price' || name === 'buyingPrice' || name === 'stock' ? Number(value) : value }));
+    setForm(f => ({ 
+      ...f, 
+      [name]: (name === 'price' || name === 'buyingPrice' || name === 'stock' || name === 'unitsPerPack' || name === 'unitPrice') ? Number(value) : value 
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -528,8 +537,18 @@ export default function Products() {
                     <input name="buyingPrice" type="number" placeholder="Buying Price" value={form.buyingPrice} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} step={0.01} />
                   </label>
                   <label style={{ fontWeight: 600, color: '#223', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    Selling Price
+                    Selling Price (Pack)
                     <input name="price" type="number" placeholder="Selling Price" value={form.price} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} step={0.01} />
+                  </label>
+                </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <label style={{ fontWeight: 600, color: '#223', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    Units per Pack
+                    <input name="unitsPerPack" type="number" placeholder="Units per Pack" value={form.unitsPerPack} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={1} />
+                  </label>
+                  <label style={{ fontWeight: 600, color: '#223', flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    Unit Price (Individual)
+                    <input name="unitPrice" type="number" placeholder="Unit Price" value={form.unitPrice} onChange={handleFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, width: '100%', boxSizing: 'border-box' }} required min={0} step={0.01} />
                   </label>
                 </div>
                 <label style={{ fontWeight: 600, color: '#223', display: 'flex', flexDirection: 'column', gap: 4 }}>

@@ -7,6 +7,8 @@ interface Product {
   description: string;
   price: number;
   stock: number;
+  unitsPerPack?: number;
+  unitPrice?: number;
   supplier: string;
   lastModified: number;
   modifiedBy?: string;
@@ -18,7 +20,7 @@ function loadProducts(): Product[] {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     const products = data ? JSON.parse(data) : [];
-    
+
     // Migrate existing products to include new fields
     const migratedProducts = products.map((product: any) => ({
       id: product.id,
@@ -27,17 +29,19 @@ function loadProducts(): Product[] {
       description: product.description || 'No description available',
       price: product.price,
       stock: product.stock,
+      unitsPerPack: product.unitsPerPack || 1,
+      unitPrice: product.unitPrice || (product.price / (product.unitsPerPack || 1)),
       supplier: product.supplier || 'Unknown',
       lastModified: product.lastModified || Date.now(),
       modifiedBy: product.modifiedBy || 'System'
     }));
-    
+
     // Save migrated products back to localStorage if migration occurred
     const needsMigration = products.some((product: any) => !product.category || !product.description);
     if (needsMigration && migratedProducts.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(migratedProducts));
     }
-    
+
     return migratedProducts;
   } catch {
     return [];
@@ -46,6 +50,7 @@ function loadProducts(): Product[] {
 
 interface CartItem extends Product {
   quantity: number;
+  isUnit?: boolean;
 }
 
 export default function Sale() {
@@ -63,6 +68,7 @@ export default function Sale() {
   const PAGE_SIZE = 8;
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [packChoiceProduct, setPackChoiceProduct] = useState<Product | null>(null);
 
   // Get cashier/owner name from sessionStorage
   const userName = sessionStorage.getItem('userName') || 'User';
@@ -82,17 +88,33 @@ export default function Sale() {
     setPage(1);
   }, [search]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, isUnitSelection: boolean = false) => {
+    // If it's a pack and no selection made yet, show choice modal
+    if (!isUnitSelection && product.unitsPerPack && product.unitsPerPack > 1) {
+      setPackChoiceProduct(product);
+      return;
+    }
+
     setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
+      // Find existing item with the same unit/pack status
+      const existing = prev.find(item => (isUnitSelection ? item.isUnit : !item.isUnit) && item.id === product.id);
+
       if (existing) {
         return prev.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          ((isUnitSelection ? item.isUnit : !item.isUnit) && item.id === product.id)
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       } else {
-        return [...prev, { ...product, quantity: 1 }];
+        return [...prev, {
+          ...product,
+          quantity: 1,
+          isUnit: isUnitSelection,
+          price: isUnitSelection ? (product.unitPrice || (product.price / (product.unitsPerPack || 1))) : product.price
+        }];
       }
     });
+    setPackChoiceProduct(null);
   };
 
   const removeFromCart = (productId: string) => {
@@ -127,6 +149,26 @@ export default function Sale() {
       }
     }
 
+    // Deduct inventory
+    try {
+      const allProducts = loadProducts();
+      const updatedProducts = allProducts.map(p => {
+        const itemsToDeduct = cart.filter(item => item.id === p.id);
+        if (itemsToDeduct.length === 0) return p;
+
+        const totalDeduction = itemsToDeduct.reduce((sum, item) => {
+          const deduction = item.isUnit ? item.quantity : item.quantity * (item.unitsPerPack || 1);
+          return sum + deduction;
+        }, 0);
+
+        return { ...p, stock: Math.max(0, p.stock - totalDeduction), lastModified: Date.now() };
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProducts));
+      setProducts(updatedProducts); // Update state to reflect deduction in UI
+    } catch (err) {
+      console.error('Failed to update inventory:', err);
+    }
+
     // Generate receipt data
     const saleRecord = {
       id: Date.now().toString(),
@@ -149,7 +191,7 @@ export default function Sale() {
       const prevSales = JSON.parse(localStorage.getItem(salesKey) || '[]');
       prevSales.push(saleRecord);
       localStorage.setItem(salesKey, JSON.stringify(prevSales));
-    } catch {}
+    } catch { }
     setReceiptData({
       ...saleRecord,
       date: new Date().toLocaleString(), // for display
@@ -185,7 +227,8 @@ export default function Sale() {
     const divider = '-'.repeat(lineWidth);
 
     const itemsHtml = receiptData.items.map((item: CartItem) => {
-      const name = item.name.length > lineWidth - 14 ? item.name.substring(0, lineWidth - 14) : item.name;
+      const itemName = item.isUnit ? `${item.name} (Unit)` : item.name;
+      const name = itemName.length > lineWidth - 14 ? itemName.substring(0, lineWidth - 14) : itemName;
       const subtotal = `Ksh ${(item.price * item.quantity).toFixed(2)}`;
       const qty = `x${item.quantity}`;
       const leftWidth = lineWidth - subtotal.length - qty.length - 2;
@@ -199,9 +242,9 @@ export default function Sale() {
 
     const html = `
       <div style="font-family:'Courier New',Courier,monospace;font-size:12px;width:${paperWidth}mm;padding:2mm;">
-        <div style="text-align:center;font-weight:bold;font-size:14px;margin-bottom:4px;">ILLUSION DRIPS</div>
+        <div style="text-align:center;font-weight:bold;font-size:14px;margin-bottom:4px;">SOFTWARE IS NOT FREE UPDATE PAYMENT!!!</div>
         <div style="text-align:center;font-size:10px;">Tel: 0712 345 678</div>
-        <div style="text-align:center;font-size:10px;margin-bottom:4px;">info@illusiondrips.co.ke</div>
+        <div style="text-align:center;font-size:10px;margin-bottom:4px;">info@goldenmarkappartments.co.ke</div>
         <div>${divider}</div>
         <div>Date:   ${receiptData.date}</div>
         <div>Rcpt#:  ${receiptData.receiptNo}</div>
@@ -232,7 +275,7 @@ export default function Sale() {
   return (
     <div style={{ padding: '24px 32px 32px 32px', maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
       <h2 style={{ marginTop: 0, marginBottom: 16 }}>Sale</h2>
-      
+
       {/* Success Notification */}
       {showSuccess && (
         <div style={{
@@ -326,27 +369,27 @@ export default function Sale() {
                 <div style={{ fontWeight: 700, fontSize: 18, color: '#223', marginBottom: 2, lineHeight: 1.2 }}>
                   {product.name}
                 </div>
-                
+
                 {/* Category */}
                 {product.category && (
-                  <div style={{ 
-                    background: '#f0f9ff', 
-                    color: '#0369a1', 
-                    padding: '2px 8px', 
-                    borderRadius: 4, 
-                    fontSize: 12, 
+                  <div style={{
+                    background: '#f0f9ff',
+                    color: '#0369a1',
+                    padding: '2px 8px',
+                    borderRadius: 4,
+                    fontSize: 12,
                     fontWeight: 600,
                     marginBottom: 4
                   }}>
                     {product.category}
                   </div>
                 )}
-                
+
                 {/* Description */}
                 {product.description && (
-                  <div style={{ 
-                    color: '#666', 
-                    fontSize: 13, 
+                  <div style={{
+                    color: '#666',
+                    fontSize: 13,
                     lineHeight: 1.3,
                     marginBottom: 6,
                     display: '-webkit-box',
@@ -358,33 +401,33 @@ export default function Sale() {
                     {product.description}
                   </div>
                 )}
-                
+
                 {/* Price */}
                 <div style={{ color: '#3182ce', fontWeight: 600, fontSize: 16, marginBottom: 4 }}>
                   Ksh {product.price.toFixed(2)}
                 </div>
-                
+
                 {/* Stock */}
-                <div style={{ 
-                  color: product.stock > 10 ? '#059669' : product.stock > 0 ? '#d97706' : '#dc2626', 
-                  fontSize: 14, 
+                <div style={{
+                  color: product.stock > 10 ? '#059669' : product.stock > 0 ? '#d97706' : '#dc2626',
+                  fontSize: 14,
                   fontWeight: 600,
                   marginBottom: 4
                 }}>
                   Stock: {product.stock}
                 </div>
-                
+
                 {/* Supplier */}
                 {product.supplier && (
                   <div style={{ color: '#888', fontSize: 12, marginBottom: 4 }}>
                     Supplier: {product.supplier}
                   </div>
                 )}
-                
+
                 {/* Last Modified Info */}
-                <div style={{ 
-                  color: '#9ca3af', 
-                  fontSize: 11, 
+                <div style={{
+                  color: '#9ca3af',
+                  fontSize: 11,
                   marginTop: 'auto',
                   paddingTop: 8,
                   borderTop: '1px solid #f3f4f6',
@@ -395,7 +438,7 @@ export default function Sale() {
                     <div>By: {product.modifiedBy}</div>
                   )}
                 </div>
-                
+
                 {/* Add Button */}
                 <button
                   onClick={() => addToCart(product)}
@@ -423,7 +466,7 @@ export default function Sale() {
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <button onClick={() => setPage(page - 1)} disabled={page === 1} style={{ padding: '4px 12px', borderRadius: 4, border: '1px solid #ccc', background: page === 1 ? '#f5f7fa' : '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer' }}>{'<'}</button>
             {Array.from({ length: totalPages }, (_, i) => (
-              <button key={i+1} onClick={() => setPage(i+1)} style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid #ccc', background: page === i+1 ? '#3182ce' : '#fff', color: page === i+1 ? '#fff' : '#222', fontWeight: page === i+1 ? 700 : 400, cursor: 'pointer' }}>{i+1}</button>
+              <button key={i + 1} onClick={() => setPage(i + 1)} style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid #ccc', background: page === i + 1 ? '#3182ce' : '#fff', color: page === i + 1 ? '#fff' : '#222', fontWeight: page === i + 1 ? 700 : 400, cursor: 'pointer' }}>{i + 1}</button>
             ))}
             <button onClick={() => setPage(page + 1)} disabled={page === totalPages} style={{ padding: '4px 12px', borderRadius: 4, border: '1px solid #ccc', background: page === totalPages ? '#f5f7fa' : '#fff', cursor: page === totalPages ? 'not-allowed' : 'pointer' }}>{'>'}</button>
           </div>
@@ -459,8 +502,10 @@ export default function Sale() {
                 {cart.length === 0 ? (
                   <tr><td colSpan={4} style={{ textAlign: 'center', padding: 18, color: '#888' }}>Cart is empty.</td></tr>
                 ) : cart.map(item => (
-                  <tr key={item.id}>
-                    <td style={{ padding: 8 }}>{item.name}</td>
+                  <tr key={item.isUnit ? `${item.id}-unit` : `${item.id}-pack`}>
+                    <td style={{ padding: 8 }}>
+                      {item.name} {item.isUnit && <span style={{ fontSize: '10px', color: '#3182ce', fontWeight: 600 }}>(Unit)</span>}
+                    </td>
                     <td style={{ padding: 8 }}>
                       <input
                         type="number"
@@ -514,7 +559,7 @@ export default function Sale() {
                 <input type="radio" name="payment" value="card" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
                 Card
               </label>
-              
+
               {/* M-Pesa specific fields */}
               {paymentMethod === 'mpesa' && (
                 <div style={{ marginTop: 16, padding: 16, background: '#f0f9ff', borderRadius: 8, border: '1px solid #0ea5e9' }}>
@@ -527,11 +572,11 @@ export default function Sale() {
                       type="time"
                       value={mpesaPaymentTime}
                       onChange={(e) => setMpesaPaymentTime(e.target.value)}
-                      style={{ 
-                        width: '100%', 
-                        padding: '8px 12px', 
-                        borderRadius: 6, 
-                        border: '1px solid #d1d5db', 
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: 6,
+                        border: '1px solid #d1d5db',
                         fontSize: '14px',
                         outline: 'none'
                       }}
@@ -547,11 +592,11 @@ export default function Sale() {
                       value={mpesaRefNumber}
                       onChange={(e) => setMpesaRefNumber(e.target.value.toUpperCase())}
                       placeholder="e.g., QG123ABC456"
-                      style={{ 
-                        width: '100%', 
-                        padding: '8px 12px', 
-                        borderRadius: 6, 
-                        border: '1px solid #d1d5db', 
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: 6,
+                        border: '1px solid #d1d5db',
                         fontSize: '14px',
                         outline: 'none',
                         textTransform: 'uppercase'
@@ -572,6 +617,77 @@ export default function Sale() {
           </div>
         </div>
       )}
+
+      {/* Pack Choice Modal */}
+      {packChoiceProduct && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(30,40,60,0.18)', zIndex: 1100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 4px 32px #0003', padding: 32, minWidth: 320, maxWidth: 400, width: '100%', position: 'relative', textAlign: 'center' }}>
+            <button onClick={() => setPackChoiceProduct(null)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', fontSize: 22, color: '#888', cursor: 'pointer' }}>&times;</button>
+            <h3 style={{ marginTop: 0, marginBottom: 8 }}>Select Sale Type</h3>
+            <p style={{ color: '#666', marginBottom: 24 }}>How would you like to sell <strong>{packChoiceProduct.name}</strong>?</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <button
+                onClick={() => addToCart(packChoiceProduct, false)}
+                style={{
+                  padding: '16px',
+                  borderRadius: 10,
+                  background: '#f0f9ff',
+                  border: '2px solid #3182ce',
+                  color: '#1e40af',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>Full Pack</div>
+                  <div style={{ fontSize: 13, opacity: 0.8 }}>Deducts {packChoiceProduct.unitsPerPack} units</div>
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 18 }}>Ksh {packChoiceProduct.price.toFixed(2)}</div>
+              </button>
+
+              <button
+                onClick={() => addToCart(packChoiceProduct, true)}
+                style={{
+                  padding: '16px',
+                  borderRadius: 10,
+                  background: '#fff',
+                  border: '2px solid #e2e8f0',
+                  color: '#475569',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#3182ce'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+              >
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>Individual Unit</div>
+                  <div style={{ fontSize: 13, opacity: 0.8 }}>Deducts 1 unit</div>
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 18 }}>
+                  Ksh {(packChoiceProduct.unitPrice || (packChoiceProduct.price / (packChoiceProduct.unitsPerPack || 1))).toFixed(2)}
+                </div>
+              </button>
+            </div>
+
+            <button
+              onClick={() => setPackChoiceProduct(null)}
+              style={{ marginTop: 24, background: 'none', border: 'none', color: '#666', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       {/* Receipt */}
       {showReceipt && receiptData && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(30,40,60,0.18)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -579,28 +695,28 @@ export default function Sale() {
             <button onClick={() => setShowReceipt(false)} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', fontSize: 22, color: '#888', cursor: 'pointer' }}>&times;</button>
             <div ref={receiptRef}>
               {/* Header */}
-                <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                <h2 style={{ 
-                  textAlign: 'center', 
-                  margin: '0 0 8px 0', 
-                  fontSize: '24px', 
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <h2 style={{
+                  textAlign: 'center',
+                  margin: '0 0 8px 0',
+                  fontSize: '24px',
                   fontWeight: 700,
                   color: '#3182ce'
                 }}>
-                  GOLDEN MARK APPARTMENTS
+                  SOFTWARE IS NOT FREE UPDATE PAYMENT!!!
                 </h2>
-                <div style={{ 
-                  textAlign: 'center', 
-                  marginBottom: 8, 
-                  color: '#666', 
+                <div style={{
+                  textAlign: 'center',
+                  marginBottom: 8,
+                  color: '#666',
                   fontSize: 11
                 }}>
-                  Tel: 0712 345 678 | Email: infO@goldenmarkappartments.co.ke
+                  Tel: 0741727877 | Email: pay allan
                 </div>
-                <div style={{ 
-                  textAlign: 'center', 
-                  marginBottom: 12, 
-                  color: '#888', 
+                <div style={{
+                  textAlign: 'center',
+                  marginBottom: 12,
+                  color: '#888',
                   fontSize: 13,
                   fontWeight: 600
                 }}>
@@ -619,16 +735,16 @@ export default function Sale() {
               </div>
 
               {/* Items Table */}
-              <table style={{ 
-                width: '100%', 
-                borderCollapse: 'collapse', 
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
                 marginBottom: 12,
                 border: '1px solid #3182ce'
               }}>
                 <thead>
                   <tr style={{ background: '#f8fafc' }}>
-                    <th style={{ 
-                      textAlign: 'left', 
+                    <th style={{
+                      textAlign: 'left',
                       padding: '8px',
                       borderBottom: '2px solid #3182ce',
                       borderRight: '1px solid #3182ce',
@@ -638,8 +754,8 @@ export default function Sale() {
                     }}>
                       Item
                     </th>
-                    <th style={{ 
-                      textAlign: 'center', 
+                    <th style={{
+                      textAlign: 'center',
                       padding: '8px',
                       borderBottom: '2px solid #3182ce',
                       borderRight: '1px solid #3182ce',
@@ -649,8 +765,8 @@ export default function Sale() {
                     }}>
                       Qty
                     </th>
-                    <th style={{ 
-                      textAlign: 'right', 
+                    <th style={{
+                      textAlign: 'right',
                       padding: '8px',
                       borderBottom: '2px solid #3182ce',
                       borderRight: '1px solid #3182ce',
@@ -660,8 +776,8 @@ export default function Sale() {
                     }}>
                       Price
                     </th>
-                    <th style={{ 
-                      textAlign: 'right', 
+                    <th style={{
+                      textAlign: 'right',
                       padding: '8px',
                       borderBottom: '2px solid #3182ce',
                       fontSize: 12,
@@ -674,19 +790,19 @@ export default function Sale() {
                 </thead>
                 <tbody>
                   {receiptData.items.map((item: CartItem, index: number) => (
-                    <tr key={item.id} style={{ 
+                    <tr key={item.id} style={{
                       background: index % 2 === 0 ? '#f8fafc' : 'white'
                     }}>
-                      <td style={{ 
+                      <td style={{
                         padding: '8px',
                         borderBottom: '1px solid #3182ce',
                         borderRight: '1px solid #3182ce',
                         fontSize: 11
                       }}>
-                        {item.name}
+                        {item.name} {item.isUnit && '(Unit)'}
                       </td>
-                      <td style={{ 
-                        textAlign: 'center', 
+                      <td style={{
+                        textAlign: 'center',
                         padding: '8px',
                         borderBottom: '1px solid #3182ce',
                         borderRight: '1px solid #3182ce',
@@ -694,8 +810,8 @@ export default function Sale() {
                       }}>
                         {item.quantity}
                       </td>
-                      <td style={{ 
-                        textAlign: 'right', 
+                      <td style={{
+                        textAlign: 'right',
                         padding: '8px',
                         borderBottom: '1px solid #3182ce',
                         borderRight: '1px solid #3182ce',
@@ -703,8 +819,8 @@ export default function Sale() {
                       }}>
                         Ksh {item.price.toFixed(2)}
                       </td>
-                      <td style={{ 
-                        textAlign: 'right', 
+                      <td style={{
+                        textAlign: 'right',
                         padding: '8px',
                         borderBottom: '1px solid #3182ce',
                         fontSize: 11,
@@ -718,10 +834,10 @@ export default function Sale() {
               </table>
 
               {/* Total */}
-              <div style={{ 
-                textAlign: 'right', 
-                fontWeight: 700, 
-                fontSize: 16, 
+              <div style={{
+                textAlign: 'right',
+                fontWeight: 700,
+                fontSize: 16,
                 marginBottom: 8,
                 color: '#3182ce',
                 borderTop: '2px solid #3182ce',
@@ -731,14 +847,14 @@ export default function Sale() {
               </div>
 
               {/* Payment Method */}
-              <div style={{ 
-                textAlign: 'right', 
+              <div style={{
+                textAlign: 'right',
                 marginBottom: 8,
                 fontSize: 12,
                 color: '#666'
               }}>
-                Payment Method: <span style={{ 
-                  fontWeight: 600, 
+                Payment Method: <span style={{
+                  fontWeight: 600,
                   textTransform: 'capitalize',
                   color: '#3182ce'
                 }}>
@@ -759,11 +875,11 @@ export default function Sale() {
               )}
 
               {/* Served By */}
-              <div style={{ 
-                textAlign: 'center', 
-                marginTop: 12, 
+              <div style={{
+                textAlign: 'center',
+                marginTop: 12,
                 marginBottom: 8,
-                color: '#666', 
+                color: '#666',
                 fontSize: 12,
                 borderTop: '1px solid #3182ce',
                 paddingTop: 8
@@ -772,10 +888,10 @@ export default function Sale() {
               </div>
 
               {/* Return Policy */}
-              <div style={{ 
-                textAlign: 'center', 
+              <div style={{
+                textAlign: 'center',
                 marginTop: 8,
-                color: '#e53e3e', 
+                color: '#e53e3e',
                 fontSize: 10,
                 fontWeight: 600,
                 borderTop: '1px solid #e53e3e',
